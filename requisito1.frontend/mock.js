@@ -1,3 +1,7 @@
+// Coordenadas das rotas obtidas via OSRM (Open Source Routing Machine)
+// baseado em OpenStreetMap. Formato: [lat, lon] para Leaflet.
+// Terminal/Rodoviária de Penedo: -10.2942449, -36.5836036
+
 export const LINHAS = [
   {
     _id: "1",
@@ -9,6 +13,20 @@ export const LINHAS = [
     origem: "Cerquinha",
     destino: "Centro",
     ativo: true,
+    // Rota real OSRM: Terminal → leste → bairro Cerquinha
+    rota: [
+      [-10.294255, -36.58359],
+      [-10.297785, -36.577432],
+      [-10.295532, -36.572808],
+      [-10.289189, -36.564065],
+      [-10.285943, -36.55879],
+      [-10.284805, -36.557183],
+      [-10.285791, -36.551445],
+      [-10.286889, -36.545254],
+      [-10.289141, -36.535289],
+      [-10.296331, -36.525677],
+      [-10.311601, -36.523191],
+    ],
   },
   {
     _id: "2",
@@ -20,6 +38,20 @@ export const LINHAS = [
     origem: "Residencial Velho",
     destino: "Centro",
     ativo: true,
+    // Rota: Terminal → sul → beira-rio → bairro sul de Penedo
+    rota: [
+      [-10.294255, -36.58359],
+      [-10.296589, -36.58056],
+      [-10.297553, -36.578343],
+      [-10.297459, -36.57672],
+      [-10.296434, -36.575393],
+      [-10.295853, -36.573119],
+      [-10.294895, -36.572355],
+      [-10.292947, -36.571767],
+      [-10.291877, -36.571302],
+      [-10.290461, -36.568025],
+      [-10.288248, -36.562865],
+    ],
   },
   {
     _id: "3",
@@ -31,6 +63,18 @@ export const LINHAS = [
     origem: "Santa Luzia",
     destino: "Terminal Central",
     ativo: true,
+    // Rota real OSRM: Terminal → noroeste → Santa Luzia
+    rota: [
+      [-10.294255, -36.58359],
+      [-10.292294, -36.58524],
+      [-10.288858, -36.582426],
+      [-10.286721, -36.578746],
+      [-10.284617, -36.573473],
+      [-10.283423, -36.570446],
+      [-10.282387, -36.568563],
+      [-10.279652, -36.565654],
+      [-10.27946,  -36.563368],
+    ],
   },
   {
     _id: "4",
@@ -42,6 +86,21 @@ export const LINHAS = [
     origem: "Centro",
     destino: "Centro",
     ativo: true,
+    // Rota real OSRM: loop pelo centro histórico de Penedo
+    rota: [
+      [-10.294255, -36.58359],
+      [-10.291698, -36.585755],
+      [-10.288873, -36.580227],
+      [-10.288702, -36.575943],
+      [-10.286129, -36.579796],
+      [-10.285769, -36.578427],
+      [-10.287997, -36.581744],
+      [-10.289824, -36.583379],
+      [-10.289162, -36.585499],
+      [-10.290745, -36.586454],
+      [-10.293667, -36.584364],
+      [-10.294255, -36.58359],
+    ],
   },
   {
     _id: "5",
@@ -53,6 +112,17 @@ export const LINHAS = [
     origem: "Penedo",
     destino: "Paulo Barbosa Uchoa",
     ativo: true,
+    // Rota: Terminal → norte pela AL-225 até comunidade rural
+    rota: [
+      [-10.294255, -36.58359],
+      [-10.282614, -36.55802],
+      [-10.263845, -36.55881],
+      [-10.246519, -36.56296],
+      [-10.236661, -36.566379],
+      [-10.222938, -36.568911],
+      [-10.210398, -36.567148],
+      [-10.190000, -36.570000],
+    ],
   },
   {
     _id: "6",
@@ -64,6 +134,22 @@ export const LINHAS = [
     origem: "Penedo",
     destino: "Arapiraca",
     ativo: true,
+    // Rota real OSRM: Terminal Penedo → AL-225/BR-316 → Arapiraca
+    rota: [
+      [-10.294255, -36.58359],
+      [-10.282614, -36.55802],
+      [-10.263845, -36.55881],
+      [-10.222938, -36.568911],
+      [-10.183972, -36.558469],
+      [-10.168261, -36.554165],
+      [-10.068579, -36.523013],
+      [-10.020089, -36.506258],
+      [-9.985816,  -36.515775],
+      [-9.967311,  -36.521244],
+      [-9.854537,  -36.575034],
+      [-9.830636,  -36.590953],
+      [-9.754629,  -36.661694],
+    ],
   },
   {
     _id: "7",
@@ -75,6 +161,13 @@ export const LINHAS = [
     origem: "Penedo",
     destino: "Neópolis",
     ativo: true,
+    // Travessia direta do Rio São Francisco
+    rota: [
+      [-10.292500, -36.586200],
+      [-10.300000, -36.583000],
+      [-10.310000, -36.579500],
+      [-10.316966, -36.576913],
+    ],
   },
   {
     _id: "8",
@@ -86,6 +179,13 @@ export const LINHAS = [
     origem: "Porto de Penedo",
     destino: "Ilha do Ouro",
     ativo: true,
+    // Passeio fluvial subindo o Rio São Francisco
+    rota: [
+      [-10.292500, -36.586200],
+      [-10.294000, -36.594000],
+      [-10.296000, -36.606000],
+      [-10.298000, -36.620000],
+    ],
   },
 ];
 
