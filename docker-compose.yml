@@ -1,0 +1,84 @@
+version: "3.8"
+
+services:
+  # ─── MongoDB ──────────────────────────────────────────────────────────────────
+  mongodb:
+    image: mongo:7
+    container_name: vambora-mongodb
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-admin123}
+    volumes:
+      - mongodb_data:/data/db
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    networks:
+      - vambora-network
+
+  # ─── Backend (Node / Express) ─────────────────────────────────────────────────
+  backend:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: vambora-backend
+    restart: unless-stopped
+    ports:
+      - "3001:3001"
+    environment:
+      PORT: 3001
+      MONGO_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-admin123}@mongodb:27017
+      JWT_SECRET: ${JWT_SECRET:-vambora-penedo-secret-key-2025}
+      NODE_ENV: ${NODE_ENV:-development}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - vambora-network
+
+  # ─── Frontend (Vite / React) ──────────────────────────────────────────────────
+  frontend:
+    build:
+      context: ./Frontend
+      dockerfile: Dockerfile
+    container_name: vambora-frontend
+    restart: unless-stopped
+    ports:
+      - "5173:5173"
+    depends_on:
+      - backend
+    networks:
+      - vambora-network
+
+  # ─── Seed (roda uma vez para popular o banco) ─────────────────────────────────
+  seed:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    container_name: vambora-seed
+    command: node src/seeds/seed.js
+    environment:
+      MONGO_URI: mongodb://${MONGO_USER:-admin}:${MONGO_PASSWORD:-admin123}@mongodb:27017
+      JWT_SECRET: ${JWT_SECRET:-vambora-penedo-secret-key-2025}
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    restart: "no"
+    profiles:
+      - seed
+    networks:
+      - vambora-network
+
+volumes:
+  mongodb_data:
+    driver: local
+
+networks:
+  vambora-network:
+    driver: bridge

@@ -1,28 +1,33 @@
-# Dependências
+# ─── Dependências ───────────────────────────────────────────────────────────────
 node_modules/
 dist/
 
-# Variáveis de ambiente
-.env
-.env.local
-.env.*.local
+# ─── Variáveis de ambiente ──────────────────────────────────────────────────────
+# .env incluído no repositório de propósito (projeto acadêmico privado)
+# Se for tornar público, descomente as linhas abaixo:
+# .env
+# .env.local
+# .env.*.local
 
-# Logs
+# ─── Logs ───────────────────────────────────────────────────────────────────────
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 
-# Cache
+# ─── Cache ──────────────────────────────────────────────────────────────────────
 .vite/
 .cache/
 
-# IDE
+# ─── IDE ────────────────────────────────────────────────────────────────────────
 .vscode/
 .idea/
 *.swp
 *.swo
 *~
 
-# SO
+# ─── SO ─────────────────────────────────────────────────────────────────────────
 .DS_Store
 Thumbs.db
+
+# ─── Docker (antigo, agora está na raiz) ────────────────────────────────────────
+DB/
