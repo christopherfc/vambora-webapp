@@ -19,8 +19,7 @@
 ## 3. Informações de Preços e Pagamento
 - **RF3.1 — Informar preços/tarifas dos transportes:** Pronto
   - O sistema fornece informações de tarifas por linha/modal. Endpoint e função buscarEstatisticas retornam tarifas.
-- **RF3.2 — Listar formas de pagamento aceitas:** Parcialmente Pronto
-  - Não há campo explícito para formas de pagamento em cada linha/modal, mas pode ser incluído nos dados.
+- **RF3.2 — Listar formas de pagamento aceitas:** Pronto
 - **RF3.3 — Reserva/pagamento de passagens no app:** Não Implementado
   - Não há integração com serviço de reserva ou pagamento de passagens.
 
