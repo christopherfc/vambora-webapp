@@ -97,7 +97,7 @@ function CartaoVambora({ saldo, tipoCartao }) {
         <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,200,134,0.8)", letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4 }}>Saldo disponível</div>
         <div style={{ fontSize: 34, fontWeight: 900, color: "#fff", letterSpacing: -1, lineHeight: 1 }}>
           <span style={{ fontSize: 17, fontWeight: 700, color: "rgba(255,255,255,0.7)", verticalAlign: "super", marginRight: 2 }}>R$</span>
-          {saldo.toFixed(2).replace(".", ",")}
+          {(saldo ?? 0).toFixed(2).replace(".", ",")}
         </div>
       </div>
 

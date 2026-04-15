@@ -126,6 +126,7 @@ export async function alterarTipoCartao(tipo) {
 
 export async function buscarSaldo() {
   const res = await fetch(`${API_URL}/usuario/saldo`, { headers: headers(true) });
+  if (!res.ok) throw new Error("Erro ao buscar saldo");
   return res.json();
 }
 
@@ -133,6 +134,7 @@ export async function buscarTransacoes(limite = 10) {
   const res = await fetch(`${API_URL}/usuario/transacoes?limite=${limite}`, {
     headers: headers(true),
   });
+  if (!res.ok) throw new Error("Erro ao buscar transações");
   return res.json();
 }
 
