@@ -1,13 +1,13 @@
 import { useState } from "react";
-import Login from "./Login.jsx";
-import Loading from "./Loading.jsx";
-import BottomNav from "./BottomNav.jsx";
-import LinhasList from "./LinhasList.jsx";
-import HorariosList from "./HorariosList.jsx";
-import Mapa from "./Mapa.jsx";
-import Saldo from "./Saldo.jsx";
-import Notificacoes from "./Notificacoes.jsx";
-import Perfil from "./Perfil.jsx";
+import Login from "./pages/Login.jsx";
+import Loading from "./pages/Loading.jsx";
+import BottomNav from "./components/BottomNav.jsx";
+import LinhasList from "./pages/LinhasList.jsx";
+import HorariosList from "./pages/HorariosList.jsx";
+import Mapa from "./pages/Mapa.jsx";
+import Saldo from "./pages/Saldo.jsx";
+import Notificacoes from "./pages/Notificacoes.jsx";
+import Perfil from "./pages/Perfil.jsx";
 
 export default function App() {
   const [logado,           setLogado]           = useState(false);
@@ -26,31 +26,12 @@ export default function App() {
 
   /* ── Tela de Login ── */
   if (!logado && !carregando) {
-    return (
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { background: #fff; }
-          input:focus { outline: none; }
-        `}</style>
-        <Login onEntrar={handleEntrar} />
-      </>
-    );
+    return <Login onEntrar={handleEntrar} />;
   }
 
   /* ── Tela de Loading (transição pós-login) ── */
   if (carregando) {
-    return (
-      <>
-        <style>{`
-          @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-          * { box-sizing: border-box; margin: 0; padding: 0; }
-          body { background: #fff; }
-        `}</style>
-        <Loading onDone={handleLoadingDone} />
-      </>
-    );
+    return <Loading onDone={handleLoadingDone} />;
   }
 
   /* ── App principal ── */
@@ -61,14 +42,6 @@ export default function App() {
 
   return (
     <>
-      <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
-        * { box-sizing: border-box; margin: 0; padding: 0; }
-        body { background: #F7F3F3; }
-        input:focus { outline: none; }
-        button:focus { outline: none; }
-      `}</style>
-
       {abaAtiva === "rotas" && !linhaSelecionada && (
         <LinhasList onSelecionarLinha={setLinhaSelecionada} />
       )}

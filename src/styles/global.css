@@ -1,0 +1,161 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+   Vambora Penedo — Design Tokens & Global Styles
+   ═══════════════════════════════════════════════════════════════════════════ */
+
+/* ── Fonte ── */
+@import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap');
+
+/* ── Variáveis de design (tokens) ── */
+:root {
+  /* Cores primárias */
+  --cor-primaria:       #FE8A00;
+  --cor-primaria-hover: #E07000;
+  --cor-primaria-light: #FFF4E6;
+  --cor-primaria-soft:  #FFC886;
+
+  /* Cores institucionais (vinho) */
+  --cor-vinho:          #612828;
+  --cor-vinho-claro:    #8B3A3A;
+  --cor-vinho-escuro:   #3D1010;
+  --cor-vinho-gradient: linear-gradient(135deg, #612828 0%, #8B3A3A 100%);
+
+  /* Cores de texto */
+  --cor-texto:          #2D1515;
+  --cor-texto-suave:    #9E7E7E;
+  --cor-texto-claro:    #C4A0A0;
+  --cor-texto-body:     #444;
+
+  /* Cores de fundo */
+  --cor-fundo:          #F7F3F3;
+  --cor-fundo-card:     #fff;
+  --cor-borda:          #F0E8E8;
+  --cor-borda-suave:    #F5EFEF;
+
+  /* Cores semânticas — transportes */
+  --cor-onibus-fundo:   #E8F4FF;
+  --cor-onibus-texto:   #2471A3;
+  --cor-van-fundo:      #E8FFF0;
+  --cor-van-texto:      #1E8449;
+  --cor-barco-fundo:    #EAF0FF;
+  --cor-barco-texto:    #1A5276;
+
+  /* Cores semânticas — feedback */
+  --cor-erro:           #C0392B;
+  --cor-erro-fundo:     #FFF0F0;
+  --cor-sucesso:        #1E8449;
+  --cor-sucesso-fundo:  #E8FFF0;
+  --cor-alerta:         #E67E00;
+  --cor-alerta-fundo:   #FFF4E0;
+  --cor-info:           #2471A3;
+  --cor-info-fundo:     #E8F4FF;
+
+  /* Tipografia */
+  --font-family:        'Nunito', sans-serif;
+
+  /* Espaçamento */
+  --radius-sm:          10px;
+  --radius-md:          14px;
+  --radius-lg:          18px;
+  --radius-xl:          22px;
+  --radius-full:        999px;
+
+  /* Sombras */
+  --shadow-sm:          0 2px 10px rgba(97, 40, 40, 0.06);
+  --shadow-md:          0 2px 12px rgba(97, 40, 40, 0.07);
+  --shadow-lg:          0 4px 20px rgba(97, 40, 40, 0.10);
+  --shadow-nav:         0 -1px 0 #F0E8E8, 0 -4px 20px rgba(97, 40, 40, 0.07);
+
+  /* Layout */
+  --nav-height:         64px;
+  --max-width-body:     500px;
+}
+
+/* ── Reset global ── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: var(--font-family);
+  background: var(--cor-fundo);
+  color: var(--cor-texto);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+input:focus,
+button:focus {
+  outline: none;
+}
+
+/* ── Utilitários ── */
+.page-container {
+  min-height: 100vh;
+  background: var(--cor-fundo);
+  font-family: var(--font-family);
+  padding-bottom: calc(var(--nav-height) + 16px);
+}
+
+.page-header {
+  background: var(--cor-vinho-gradient);
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header__blob {
+  position: absolute;
+  border-radius: 50%;
+  background: rgba(254, 138, 0, 0.13);
+  pointer-events: none;
+}
+
+.page-body {
+  padding: 20px 16px;
+  max-width: var(--max-width-body);
+  margin: 0 auto;
+}
+
+/* ── Cards ── */
+.card {
+  background: var(--cor-fundo-card);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Chips / Tags ── */
+.chip {
+  padding: 7px 18px;
+  border-radius: var(--radius-full);
+  font-weight: 700;
+  font-size: 13px;
+  border: none;
+  cursor: pointer;
+  font-family: var(--font-family);
+  transition: all 0.15s;
+}
+
+.chip--active {
+  background: var(--cor-primaria);
+  color: #fff;
+  font-weight: 800;
+}
+
+.chip--inactive {
+  background: var(--cor-fundo-card);
+  color: var(--cor-vinho);
+  border: 2px solid var(--cor-borda);
+}
+
+/* ── Seções ── */
+.section-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: var(--cor-texto-suave);
+  letter-spacing: 1px;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}

@@ -12,10 +12,10 @@ const TRANSACOES = [
 ];
 
 const CONFIG_TIPO = {
-  onibus:  { fundo: "#E8F4FF", cor: "#2471A3", Icone: Bus    },
-  barco:   { fundo: "#EAF0FF", cor: "#1A5276", Icone: Anchor },
-  van:     { fundo: "#E8FFF0", cor: "#1E8449", Icone: Truck  },
-  recarga: { fundo: "#E8FFF0", cor: "#1E8449", Icone: Zap    },
+  onibus:  { fundo: "var(--cor-onibus-fundo)", cor: "#2471A3", Icone: Bus    },
+  barco:   { fundo: "var(--cor-barco-fundo)",  cor: "#1A5276", Icone: Anchor },
+  van:     { fundo: "var(--cor-van-fundo)",    cor: "#1E8449", Icone: Truck  },
+  recarga: { fundo: "var(--cor-sucesso-fundo)", cor: "#1E8449", Icone: Zap   },
 };
 
 const TIPOS_CARTAO = ["Comum", "Estudante", "Idoso"];
@@ -77,9 +77,9 @@ function CartaoVambora({ saldo, tipoCartao }) {
       <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", position: "relative" }}>
         <Chip />
         <div style={{ textAlign: "center", lineHeight: 1 }}>
-          <span style={{ fontSize: 15, fontWeight: 900, color: "#FE8A00", letterSpacing: -0.5 }}>vam</span>
+          <span style={{ fontSize: 15, fontWeight: 900, color: "var(--cor-primaria)", letterSpacing: -0.5 }}>vam</span>
           <span style={{ fontSize: 15, fontWeight: 900, color: "#fff",    letterSpacing: -0.5 }}>bora</span>
-          <span style={{ fontSize: 15, fontWeight: 900, color: "#FE8A00"                      }}>.</span>
+          <span style={{ fontSize: 15, fontWeight: 900, color: "var(--cor-primaria)"                      }}>.</span>
           <div style={{ fontSize: 9, fontWeight: 700, color: "rgba(255,255,255,0.5)", letterSpacing: 1.5, textTransform: "uppercase", marginTop: 2 }}>penedo</div>
         </div>
         <Contactless />
@@ -103,7 +103,7 @@ function CartaoVambora({ saldo, tipoCartao }) {
           </div>
         </div>
         <div style={{ background: "rgba(254,138,0,0.25)", border: "1px solid rgba(254,138,0,0.5)", borderRadius: 8, padding: "4px 10px" }}>
-          <div style={{ fontSize: 10, fontWeight: 800, color: "#FFC886", letterSpacing: 0.5 }}>{tipoCartao.toUpperCase()}</div>
+          <div style={{ fontSize: 10, fontWeight: 800, color: "var(--cor-primaria-soft)", letterSpacing: 0.5 }}>{tipoCartao.toUpperCase()}</div>
         </div>
       </div>
     </div>
@@ -111,26 +111,26 @@ function CartaoVambora({ saldo, tipoCartao }) {
 }
 
 const s = {
-  container:    { minHeight: "100vh", background: "#F7F3F3", fontFamily: "'Nunito', sans-serif", paddingBottom: 80 },
-  header:       { background: "linear-gradient(135deg, #612828 0%, #8B3A3A 100%)", padding: "28px 20px 52px", position: "relative", overflow: "hidden" },
+  container:    { minHeight: "100vh", background: "var(--cor-fundo)", fontFamily: "var(--font-family)", paddingBottom: 80 },
+  header:       { background: "var(--cor-vinho-gradient)", padding: "28px 20px 52px", position: "relative", overflow: "hidden" },
   blob1:        { position: "absolute", top: -40, right: -40, width: 160, height: 160, borderRadius: "50%", background: "rgba(254,138,0,0.13)", pointerEvents: "none" },
-  headerLabel:  { fontSize: 12, fontWeight: 700, color: "#FFC886", letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4, position: "relative" },
+  headerLabel:  { fontSize: 12, fontWeight: 700, color: "var(--cor-primaria-soft)", letterSpacing: 1.2, textTransform: "uppercase", marginBottom: 4, position: "relative" },
   headerTitulo: { fontSize: 24, fontWeight: 900, color: "#fff", position: "relative" },
 
   acoes:        { margin: "14px 16px 0", background: "#fff", borderRadius: 16, padding: "14px 16px", boxShadow: "0 2px 12px rgba(97,40,40,0.08)", display: "flex", flexDirection: "column", gap: 12 },
   chipRow:      { display: "flex", gap: 8 },
-  chipCartao:   (ativo) => ({ padding: "6px 16px", borderRadius: 999, background: ativo ? "#FE8A00" : "#F5EFEF", color: ativo ? "#fff" : "#9E7E7E", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", fontFamily: "'Nunito', sans-serif", transition: "all 0.15s" }),
+  chipCartao:   (ativo) => ({ padding: "6px 16px", borderRadius: 999, background: ativo ? "var(--cor-primaria)" : "var(--cor-borda-suave)", color: ativo ? "#fff" : "var(--cor-texto-suave)", fontSize: 12, fontWeight: 800, border: "none", cursor: "pointer", fontFamily: "var(--font-family)", transition: "all 0.15s" }),
   botoesRow:    { display: "flex", gap: 10 },
-  btn:          (primary) => ({ flex: 1, padding: "12px", borderRadius: 12, fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "'Nunito', sans-serif", border: "none", background: primary ? "#FE8A00" : "#F5EFEF", color: primary ? "#fff" : "#612828", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }),
+  btn:          (primary) => ({ flex: 1, padding: "12px", borderRadius: 12, fontWeight: 800, fontSize: 13, cursor: "pointer", fontFamily: "var(--font-family)", border: "none", background: primary ? "var(--cor-primaria)" : "var(--cor-borda-suave)", color: primary ? "#fff" : "var(--cor-vinho)", display: "flex", alignItems: "center", justifyContent: "center", gap: 6 }),
 
   body:         { padding: "20px 16px" },
-  secLabel:     { fontSize: 12, fontWeight: 800, color: "#9E7E7E", letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 },
-  card:         { background: "#fff", borderRadius: 16, padding: "14px 16px", marginBottom: 10, boxShadow: "0 2px 10px rgba(97,40,40,0.06)", display: "flex", alignItems: "center", gap: 14 },
+  secLabel:     { fontSize: 12, fontWeight: 800, color: "var(--cor-texto-suave)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 12 },
+  card:         { background: "#fff", borderRadius: 16, padding: "14px 16px", marginBottom: 10, boxShadow: "var(--shadow-sm)", display: "flex", alignItems: "center", gap: 14 },
   icone:        { width: 42, height: 42, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 },
   info:         { flex: 1, minWidth: 0 },
-  infoNome:     { fontSize: 13, fontWeight: 700, color: "#2D1515", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
-  infoData:     { fontSize: 11, color: "#9E7E7E", fontWeight: 600 },
-  valor:        (pos) => ({ fontSize: 15, fontWeight: 900, color: pos ? "#1E8449" : "#2D1515", flexShrink: 0 }),
+  infoNome:     { fontSize: 13, fontWeight: 700, color: "var(--cor-texto)", marginBottom: 2, whiteSpace: "nowrap", overflow: "hidden", textOverflow: "ellipsis" },
+  infoData:     { fontSize: 11, color: "var(--cor-texto-suave)", fontWeight: 600 },
+  valor:        (pos) => ({ fontSize: 15, fontWeight: 900, color: pos ? "var(--cor-sucesso)" : "var(--cor-texto)", flexShrink: 0 }),
 };
 
 export default function Saldo() {

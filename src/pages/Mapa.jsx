@@ -3,7 +3,7 @@ import { MapContainer, TileLayer, Polyline, Marker, useMap } from "react-leaflet
 import { Bus, Truck, Anchor, ArrowRight, X, Clock } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { LINHAS, HORARIOS } from "./mock.js";
+import { LINHAS, HORARIOS } from "../data/mock.js";
 
 // Fix Leaflet default icon bug with Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -56,17 +56,17 @@ function RecenterMap() {
 }
 
 const s = {
-  wrapper:    { display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", fontFamily: "'Nunito', sans-serif" },
-  header:     { background: "linear-gradient(135deg, #612828 0%, #8B3A3A 100%)", padding: "18px 20px 14px", position: "relative", overflow: "hidden", flexShrink: 0 },
+  wrapper:    { display: "flex", flexDirection: "column", height: "calc(100vh - 64px)", fontFamily: "var(--font-family)" },
+  header:     { background: "var(--cor-vinho-gradient)", padding: "18px 20px 14px", position: "relative", overflow: "hidden", flexShrink: 0 },
   hBlob:      { position: "absolute", top: -30, right: -30, width: 120, height: 120, borderRadius: "50%", background: "rgba(254,138,0,0.14)", pointerEvents: "none" },
   hTitulo:    { fontSize: 20, fontWeight: 900, color: "#fff", position: "relative" },
-  hSub:       { fontSize: 12, color: "#FFC886", fontWeight: 600, marginTop: 2, position: "relative" },
+  hSub:       { fontSize: 12, color: "var(--cor-primaria-soft)", fontWeight: 600, marginTop: 2, position: "relative" },
   filtros:    { display: "flex", gap: 8, padding: "10px 16px", background: "#fff", boxShadow: "0 2px 8px rgba(97,40,40,0.06)", flexShrink: 0, overflowX: "auto" },
-  chipAtivo:  { padding: "6px 16px", borderRadius: 999, background: "#FE8A00", color: "#fff", fontWeight: 800, fontSize: 12, border: "none", cursor: "pointer", fontFamily: "'Nunito', sans-serif", whiteSpace: "nowrap" },
-  chipInativo:{ padding: "6px 16px", borderRadius: 999, background: "#F5EFEF", color: "#612828", fontWeight: 700, fontSize: 12, border: "none", cursor: "pointer", fontFamily: "'Nunito', sans-serif", whiteSpace: "nowrap" },
+  chipAtivo:  { padding: "6px 16px", borderRadius: 999, background: "var(--cor-primaria)", color: "#fff", fontWeight: 800, fontSize: 12, border: "none", cursor: "pointer", fontFamily: "var(--font-family)", whiteSpace: "nowrap" },
+  chipInativo:{ padding: "6px 16px", borderRadius: 999, background: "var(--cor-borda-suave)", color: "var(--cor-vinho)", fontWeight: 700, fontSize: 12, border: "none", cursor: "pointer", fontFamily: "var(--font-family)", whiteSpace: "nowrap" },
   mapWrap:    { flex: 1, position: "relative", overflow: "hidden" },
   legenda:    { position: "absolute", top: 12, right: 12, zIndex: 1000, background: "rgba(255,255,255,0.95)", borderRadius: 14, padding: "10px 14px", boxShadow: "0 4px 16px rgba(0,0,0,0.12)", backdropFilter: "blur(8px)" },
-  legItem:    { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, fontSize: 12, fontWeight: 700, color: "#2D1515" },
+  legItem:    { display: "flex", alignItems: "center", gap: 8, marginBottom: 6, fontSize: 12, fontWeight: 700, color: "var(--cor-texto)" },
   legBolinha: (cor) => ({ width: 10, height: 10, borderRadius: "50%", background: cor, flexShrink: 0 }),
 
   painel:     (aberto) => ({
@@ -76,18 +76,18 @@ const s = {
     padding: "20px 20px 24px",
     transform: aberto ? "translateY(0)" : "translateY(110%)",
     transition: "transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)",
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
   }),
   painelHandle: { width: 40, height: 4, borderRadius: 999, background: "#E0D8D8", margin: "0 auto 16px" },
   painelHeader: { display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 14 },
-  painelTitulo: { fontSize: 16, fontWeight: 900, color: "#2D1515", marginBottom: 2 },
-  painelRota:   { fontSize: 13, color: "#9E7E7E", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 },
+  painelTitulo: { fontSize: 16, fontWeight: 900, color: "var(--cor-texto)", marginBottom: 2 },
+  painelRota:   { fontSize: 13, color: "var(--cor-texto-suave)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4 },
   painelInfo:   { display: "flex", gap: 10, marginBottom: 16 },
   infoCard:     (cor) => ({ flex: 1, background: cor + "18", borderRadius: 12, padding: "10px 12px", textAlign: "center" }),
   infoVal:      (cor) => ({ fontSize: 18, fontWeight: 900, color: cor, display: "flex", alignItems: "center", justifyContent: "center", gap: 4 }),
-  infoLbl:      { fontSize: 10, color: "#9E7E7E", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginTop: 2 },
-  btnVerHor:    (cor) => ({ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: cor, color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "'Nunito', sans-serif" }),
-  btnFechar:    { background: "#F5EFEF", border: "none", borderRadius: 10, padding: "6px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
+  infoLbl:      { fontSize: 10, color: "var(--cor-texto-suave)", fontWeight: 700, textTransform: "uppercase", letterSpacing: 0.5, marginTop: 2 },
+  btnVerHor:    (cor) => ({ width: "100%", padding: "14px", borderRadius: 14, border: "none", background: cor, color: "#fff", fontSize: 14, fontWeight: 800, cursor: "pointer", fontFamily: "var(--font-family)" }),
+  btnFechar:    { background: "var(--cor-borda-suave)", border: "none", borderRadius: 10, padding: "6px", cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center" },
 };
 
 export default function Mapa({ onVerHorarios }) {
@@ -192,12 +192,12 @@ export default function Mapa({ onVerHorarios }) {
               <div style={s.painelTitulo}>{linhaSel.nome}</div>
               <div style={s.painelRota}>
                 {linhaSel.origem}
-                <ArrowRight size={12} color="#C4A0A0" />
+                <ArrowRight size={12} color="var(--cor-texto-claro)" />
                 {linhaSel.destino}
               </div>
             </div>
             <button style={s.btnFechar} onClick={fecharPainel}>
-              <X size={18} color="#9E7E7E" strokeWidth={2.5} />
+              <X size={18} color="var(--cor-texto-suave)" strokeWidth={2.5} />
             </button>
           </div>
 

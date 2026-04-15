@@ -11,12 +11,12 @@ const ABAS = [
 const s = {
   nav: {
     position: "fixed", bottom: 0, left: 0, right: 0,
-    height: 64,
-    background: "#fff",
-    boxShadow: "0 -1px 0 #F0E8E8, 0 -4px 20px rgba(97,40,40,0.07)",
+    height: "var(--nav-height, 64px)",
+    background: "var(--cor-fundo-card)",
+    boxShadow: "var(--shadow-nav)",
     display: "flex", alignItems: "center", justifyContent: "space-around",
     zIndex: 10000,
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
   },
   item: {
     display: "flex", flexDirection: "column", alignItems: "center", gap: 3,
@@ -31,7 +31,7 @@ export default function BottomNav({ abaAtiva, onMudar, notificacoes = 0 }) {
     <nav style={s.nav}>
       {ABAS.map(({ id, label, Icone }) => {
         const ativo = abaAtiva === id;
-        const cor   = ativo ? "#FE8A00" : "#9E7E7E";
+        const cor   = ativo ? "var(--cor-primaria)" : "var(--cor-texto-suave)";
         return (
           <button key={id} style={s.item} onClick={() => onMudar(id)}>
             <div style={{ position: "relative" }}>
@@ -40,7 +40,7 @@ export default function BottomNav({ abaAtiva, onMudar, notificacoes = 0 }) {
                 <span style={{
                   position: "absolute", top: -2, right: -4,
                   width: 8, height: 8, borderRadius: "50%",
-                  background: "#FE8A00", border: "2px solid #fff",
+                  background: "var(--cor-primaria)", border: "2px solid #fff",
                 }} />
               )}
             </div>
@@ -49,7 +49,7 @@ export default function BottomNav({ abaAtiva, onMudar, notificacoes = 0 }) {
               fontWeight: ativo ? 800 : 600,
               color: cor,
               letterSpacing: 0.3,
-              fontFamily: "'Nunito', sans-serif",
+              fontFamily: "var(--font-family)",
             }}>
               {label}
             </span>

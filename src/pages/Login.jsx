@@ -7,7 +7,7 @@ const s = {
     display: "flex",
     alignItems: "center",
     justifyContent: "center",
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     position: "relative",
     overflow: "hidden",
   },
@@ -17,7 +17,7 @@ const s = {
     position: "fixed", top: -60, left: -60,
     width: 260, height: 240,
     borderRadius: "71% 29% 62% 38% / 44% 57% 43% 56%",
-    background: "#FE8A00",
+    background: "var(--cor-primaria)",
     zIndex: 0,
   },
   blobTLSoft: {
@@ -31,7 +31,7 @@ const s = {
     position: "fixed", top: 60, right: -24,
     width: 70, height: 120,
     borderRadius: "62% 38% 46% 54% / 38% 65% 35% 62%",
-    background: "#3D1010",
+    background: "var(--cor-vinho-escuro)",
     zIndex: 0,
   },
   blobBR: {
@@ -62,7 +62,7 @@ const s = {
   },
   logoSub: {
     fontSize: 13,
-    color: "#9E7E7E",
+    color: "var(--cor-texto-suave)",
     fontWeight: 600,
     marginBottom: 16,
   },
@@ -82,7 +82,7 @@ const s = {
     border: "none",
     background: "#F2F2F2",
     fontSize: 14,
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     outline: "none",
     color: "#333",
     boxSizing: "border-box",
@@ -104,7 +104,7 @@ const s = {
     background: "transparent",
     border: "none",
     cursor: "pointer",
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     color: "#333",
     borderRight: "1px solid #E0E0E0",
     whiteSpace: "nowrap",
@@ -115,7 +115,7 @@ const s = {
     border: "none",
     background: "transparent",
     fontSize: 14,
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     outline: "none",
     color: "#333",
   },
@@ -127,7 +127,7 @@ const s = {
     cursor: "pointer",
     background: "none",
     border: "none",
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     textAlign: "left",
     padding: 0,
     marginTop: -4,
@@ -138,12 +138,12 @@ const s = {
     padding: "15px",
     borderRadius: 12,
     border: "none",
-    background: "#FE8A00",
+    background: "var(--cor-primaria)",
     color: "#fff",
     fontSize: 16,
     fontWeight: 800,
     cursor: "pointer",
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     marginTop: 4,
     transition: "opacity 0.2s",
   },
@@ -155,19 +155,19 @@ const s = {
     background: "none",
     border: "none",
     cursor: "pointer",
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     textDecoration: "underline",
     padding: 0,
   },
 
   linkDestaque: {
-    color: "#FE8A00",
+    color: "var(--cor-primaria)",
     fontWeight: 700,
     textDecoration: "underline",
     cursor: "pointer",
     background: "none",
     border: "none",
-    fontFamily: "'Nunito', sans-serif",
+    fontFamily: "var(--font-family)",
     fontSize: 13,
   },
 
@@ -238,10 +238,10 @@ export default function Login({ onEntrar }) {
       {tela === "login" ? (
         <form style={s.form} onSubmit={handleLogin}>
           <div style={s.logo}>
-            <span style={{ color: "#FE8A00" }}>vam</span>
-            <span style={{ color: "#2D1515" }}>bora</span>
-            <span style={{ color: "#FE8A00" }}>.</span>
-            <span style={{ color: "#2D1515", fontSize: 22, fontWeight: 700 }}> penedo</span>
+            <span style={{ color: "var(--cor-primaria)" }}>vam</span>
+            <span style={{ color: "var(--cor-texto)" }}>bora</span>
+            <span style={{ color: "var(--cor-primaria)" }}>.</span>
+            <span style={{ color: "var(--cor-texto)", fontSize: 22, fontWeight: 700 }}> penedo</span>
           </div>
           <div style={s.logoSub}>Conectando pessoas, movendo Penedo.</div>
           <input
@@ -280,10 +280,10 @@ export default function Login({ onEntrar }) {
       ) : (
         <form style={s.form} onSubmit={handleCadastro}>
           <div style={s.logo}>
-            <span style={{ color: "#FE8A00" }}>vam</span>
-            <span style={{ color: "#2D1515" }}>bora</span>
-            <span style={{ color: "#FE8A00" }}>.</span>
-            <span style={{ color: "#2D1515", fontSize: 22, fontWeight: 700 }}> penedo</span>
+            <span style={{ color: "var(--cor-primaria)" }}>vam</span>
+            <span style={{ color: "var(--cor-texto)" }}>bora</span>
+            <span style={{ color: "var(--cor-primaria)" }}>.</span>
+            <span style={{ color: "var(--cor-texto)", fontSize: 22, fontWeight: 700 }}> penedo</span>
           </div>
           <div style={s.titulo}>Criar<br />Conta</div>
           <input

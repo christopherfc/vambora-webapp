@@ -1,4 +1,4 @@
-import { LINHAS, HORARIOS } from "./mock.js";
+import { LINHAS, HORARIOS } from "../data/mock.js";
 
 const DELAY = 600;
 

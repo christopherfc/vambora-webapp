@@ -60,7 +60,7 @@ export default function Loading({ onDone }) {
       background: "#fff",
       display: "flex", flexDirection: "column",
       alignItems: "center", justifyContent: "center",
-      fontFamily: "'Nunito', sans-serif",
+      fontFamily: "var(--font-family)",
       overflow: "hidden",
       opacity: fadeOut ? 0 : 1,
       transition: "opacity 0.55s ease",
@@ -153,7 +153,7 @@ export default function Loading({ onDone }) {
       {/* ── Blobs de fundo ── */}
       <div className="ld2-blob-tl" style={{
         position: "fixed", top: -60, left: -60, width: 260, height: 240,
-        background: "#FE8A00", zIndex: 0,
+        background: "var(--cor-primaria)", zIndex: 0,
       }} />
       <div className="ld2-blob-tl-soft" style={{
         position: "fixed", top: 80, left: 10, width: 200, height: 180,
@@ -161,7 +161,7 @@ export default function Loading({ onDone }) {
       }} />
       <div className="ld2-blob-tr" style={{
         position: "fixed", top: 60, right: -24, width: 70, height: 120,
-        background: "#3D1010", zIndex: 0,
+        background: "var(--cor-vinho-escuro)", zIndex: 0,
       }} />
       <div className="ld2-blob-br" style={{
         position: "fixed", bottom: -50, right: -50, width: 230, height: 210,
@@ -195,10 +195,10 @@ export default function Loading({ onDone }) {
           fontSize: 32, fontWeight: 900, letterSpacing: "-0.5px",
           lineHeight: 1, textAlign: "center",
         }}>
-          <span style={{ color: "#FE8A00" }}>vam</span>
-          <span style={{ color: "#2D1515" }}>bora</span>
-          <span style={{ color: "#FE8A00" }}>.</span>
-          <span style={{ color: "#2D1515", fontSize: 20, fontWeight: 700 }}> penedo</span>
+          <span style={{ color: "var(--cor-primaria)" }}>vam</span>
+          <span style={{ color: "var(--cor-texto)" }}>bora</span>
+          <span style={{ color: "var(--cor-primaria)" }}>.</span>
+          <span style={{ color: "var(--cor-texto)", fontSize: 20, fontWeight: 700 }}> penedo</span>
         </div>
 
         {/* Blob central + ripples */}
@@ -264,7 +264,7 @@ export default function Loading({ onDone }) {
         {/* Texto rotativo */}
         <div className="ld2-txt" style={{
           fontSize: 13, fontWeight: 700,
-          color: "#9E7E7E", letterSpacing: 0.8,
+          color: "var(--cor-texto-suave)", letterSpacing: 0.8,
           textTransform: "uppercase",
           minHeight: 20, textAlign: "center",
         }}>

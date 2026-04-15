@@ -11,28 +11,28 @@ const NOTIFICACOES = [
 ];
 
 const CONFIG_TIPO = {
-  alerta:  { fundo: "#FFF4E0", cor: "#E67E00", Icone: AlertTriangle  },
-  info:    { fundo: "#E8F4FF", cor: "#2471A3", Icone: Info           },
-  sucesso: { fundo: "#E8FFF0", cor: "#1E8449", Icone: CheckCircle    },
+  alerta:  { fundo: "var(--cor-alerta-fundo)", cor: "var(--cor-alerta)", Icone: AlertTriangle  },
+  info:    { fundo: "var(--cor-info-fundo)",    cor: "var(--cor-info)",   Icone: Info           },
+  sucesso: { fundo: "var(--cor-sucesso-fundo)", cor: "var(--cor-sucesso)", Icone: CheckCircle   },
 };
 
 const s = {
-  container:    { minHeight: "100vh", background: "#F7F3F3", fontFamily: "'Nunito', sans-serif", paddingBottom: 80 },
-  header:       { background: "linear-gradient(135deg, #612828 0%, #8B3A3A 100%)", padding: "28px 20px", position: "relative", overflow: "hidden" },
+  container:    { minHeight: "100vh", background: "var(--cor-fundo)", fontFamily: "var(--font-family)", paddingBottom: 80 },
+  header:       { background: "var(--cor-vinho-gradient)", padding: "28px 20px", position: "relative", overflow: "hidden" },
   blob1:        { position: "absolute", top: -40, right: -40, width: 140, height: 140, borderRadius: "50%", background: "rgba(254,138,0,0.12)", pointerEvents: "none" },
   headerTitulo: { fontSize: 22, fontWeight: 900, color: "#fff", position: "relative" },
-  headerSub:    { fontSize: 13, color: "#FFC886", fontWeight: 600, marginTop: 4, position: "relative" },
+  headerSub:    { fontSize: 13, color: "var(--cor-primaria-soft)", fontWeight: 600, marginTop: 4, position: "relative" },
 
   body:      { padding: "16px" },
-  secLabel:  { fontSize: 12, fontWeight: 800, color: "#9E7E7E", letterSpacing: 1, textTransform: "uppercase", marginBottom: 12, marginTop: 8 },
-  card:      { background: "#fff", borderRadius: 16, padding: "14px 16px", marginBottom: 10, boxShadow: "0 2px 10px rgba(97,40,40,0.06)", display: "flex", gap: 14, alignItems: "flex-start", position: "relative" },
-  cardNova:  { borderLeft: "3px solid #FE8A00" },
+  secLabel:  { fontSize: 12, fontWeight: 800, color: "var(--cor-texto-suave)", letterSpacing: 1, textTransform: "uppercase", marginBottom: 12, marginTop: 8 },
+  card:      { background: "#fff", borderRadius: 16, padding: "14px 16px", marginBottom: 10, boxShadow: "var(--shadow-sm)", display: "flex", gap: 14, alignItems: "flex-start", position: "relative" },
+  cardNova:  { borderLeft: "3px solid var(--cor-primaria)" },
   icone:     { width: 40, height: 40, borderRadius: 12, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 },
   info:      { flex: 1 },
-  titulo:    { fontSize: 14, fontWeight: 800, color: "#2D1515", marginBottom: 4 },
+  titulo:    { fontSize: 14, fontWeight: 800, color: "var(--cor-texto)", marginBottom: 4 },
   descricao: { fontSize: 12, color: "#666", fontWeight: 600, lineHeight: 1.5, marginBottom: 6 },
   data:      { fontSize: 11, color: "#B0A0A0", fontWeight: 600 },
-  badge:     { position: "absolute", top: 14, right: 14, width: 8, height: 8, borderRadius: "50%", background: "#FE8A00" },
+  badge:     { position: "absolute", top: 14, right: 14, width: 8, height: 8, borderRadius: "50%", background: "var(--cor-primaria)" },
 };
 
 export default function Notificacoes() {
