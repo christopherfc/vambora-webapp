@@ -35,6 +35,7 @@ model User {
   localizacaoVeiculo     VeiculoLocalizacao?
   cobrancasFeitas        Cobranca[]     @relation("CobradorCobrancas")
   cobrancasRecebidas     Cobranca[]     @relation("PassageiroCobrancas")
+  recargas               Recarga[]
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
@@ -212,6 +213,22 @@ model RegraCobranca {
   @@map("regras_cobranca")
 }
 
+model Recarga {
+  id                    Int           @id @default(autoincrement())
+  usuarioId             Int
+  valor                 Decimal       @db.Decimal(10, 2)
+  status                StatusRecarga @default(PENDENTE)
+  preferenceId          String?
+  paymentId             String?
+  checkoutUrl           String?       @db.Text
+  usuario               User          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  createdAt             DateTime      @default(now())
+  updatedAt             DateTime      @updatedAt
+
+  @@index([usuarioId, createdAt])
+  @@map("recargas")
+}
+
 enum Role {
   USER
   ADMIN
@@ -253,4 +270,11 @@ enum TipoTransacao {
 enum StatusCobranca {
   APROVADA
   RECUSADA
+}
+
+enum StatusRecarga {
+  PENDENTE
+  APROVADA
+  RECUSADA
+  CANCELADA
 }

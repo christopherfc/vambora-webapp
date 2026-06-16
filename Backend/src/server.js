@@ -12,6 +12,8 @@ import faqRoutes from "./routes/faq.routes.js";
 import adminRoutes from "./routes/admin.routes.js";
 import motoristaRoutes from "./routes/motorista.routes.js";
 import cobradorRoutes from "./routes/cobrador.routes.js";
+import recargasRoutes from "./routes/recargas.routes.js";
+import webhooksRoutes from "./routes/webhooks.routes.js";
 import bootstrapAdmin from "./services/bootstrapAdmin.js";
 
 const app = express();
@@ -33,11 +35,13 @@ app.use("/api/auth", authRoutes);
 app.use("/api/linhas", linhasRoutes);
 app.use("/api/usuario", usuarioRoutes);
 app.use("/api/usuario", transacoesRoutes);
+app.use("/api/usuario", recargasRoutes);
 app.use("/api/usuario/notificacoes", notificacoesRoutes);
 app.use("/api/faq", faqRoutes);
 app.use("/api/admin", adminRoutes);
 app.use("/api/motorista", motoristaRoutes);
 app.use("/api/cobrador", cobradorRoutes);
+app.use("/api/webhooks", webhooksRoutes);
 
 app.get("/", (req, res) => {
   res.json({ mensagem: "API Vambora Penedo v1.0" });

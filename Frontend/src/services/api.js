@@ -214,6 +214,17 @@ export async function buscarTransacoes(limite = 10) {
   return res.json();
 }
 
+export async function criarRecarga(valor) {
+  const res = await fetch(`${API_URL}/usuario/recargas`, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify({ valor }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao criar recarga");
+  return data;
+}
+
 // ── Notificações ───────────────────────────────────────────────────────────────
 
 export async function buscarNotificacoes() {

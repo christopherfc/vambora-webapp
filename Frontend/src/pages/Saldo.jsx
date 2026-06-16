@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Bus, Truck, Anchor, Zap, Plus, FileText } from "lucide-react";
 import QRCode from "qrcode";
-import { buscarSaldo, buscarTransacoes, alterarTipoCartao } from "../services/api.js";
+import { buscarSaldo, buscarTransacoes, alterarTipoCartao, criarRecarga } from "../services/api.js";
 
 const CONFIG_TIPO = {
   onibus:  { fundo: "var(--cor-onibus-fundo)", cor: "#2471A3", Icone: Bus    },
@@ -143,6 +143,9 @@ const s = {
   qrCard:       { margin: "14px 16px 0", background: "#fff", borderRadius: 16, padding: 16, boxShadow: "var(--shadow-sm)", textAlign: "center" },
   qrImg:        { width: 190, height: 190, margin: "8px auto", display: "block" },
   qrCodeText:   { fontSize: 13, fontWeight: 900, color: "var(--cor-vinho)", letterSpacing: 1 },
+  recargaBox:   { display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" },
+  recargaInput: { width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--cor-borda)", fontFamily: "var(--font-family)", fontWeight: 800, boxSizing: "border-box" },
+  erro:         { background: "var(--cor-erro-fundo)", color: "var(--cor-erro)", padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 800 },
 };
 
 export default function Saldo() {
@@ -150,6 +153,9 @@ export default function Saldo() {
   const [saldo,       setSaldo]       = useState(0);
   const [numeroCartao,setNumeroCartao]= useState("");
   const [qrSrc,       setQrSrc]       = useState("");
+  const [valorRecarga,setValorRecarga]= useState("20");
+  const [erroRecarga, setErroRecarga] = useState("");
+  const [criandoRecarga, setCriandoRecarga] = useState(false);
   const [transacoes,  setTransacoes]  = useState([]);
   const [carregando,  setCarregando]  = useState(true);
 
@@ -190,6 +196,24 @@ export default function Saldo() {
     }
   }
 
+  async function handleRecarga() {
+    setErroRecarga("");
+    setCriandoRecarga(true);
+    try {
+      const valor = Number(String(valorRecarga).replace(",", "."));
+      const data = await criarRecarga(valor);
+      if (data.recarga?.checkoutUrl) {
+        window.location.href = data.recarga.checkoutUrl;
+      } else {
+        setErroRecarga("Nao foi possivel abrir o link de pagamento.");
+      }
+    } catch (error) {
+      setErroRecarga(error.message);
+    } finally {
+      setCriandoRecarga(false);
+    }
+  }
+
   if (carregando) {
     return (
       <div style={s.container}>
@@ -226,13 +250,27 @@ export default function Saldo() {
           ))}
         </div>
         <div style={s.botoesRow}>
-          <button style={s.btn(true)}>
+          <button style={s.btn(true)} onClick={handleRecarga} disabled={criandoRecarga}>
             <Plus size={15} strokeWidth={2.5} /> Recarregar
           </button>
           <button style={s.btn(false)}>
             <FileText size={15} strokeWidth={2} /> Extrato
           </button>
         </div>
+        <div style={s.recargaBox}>
+          <input
+            style={s.recargaInput}
+            type="number"
+            min="1"
+            max="100"
+            step="1"
+            value={valorRecarga}
+            onChange={(e) => setValorRecarga(e.target.value)}
+            placeholder="Valor de R$1 a R$100"
+          />
+          <span style={{ fontSize: 12, fontWeight: 900, color: "var(--cor-texto-suave)" }}>R$1-R$100</span>
+        </div>
+        {erroRecarga && <div style={s.erro}>{erroRecarga}</div>}
       </div>
 
       <div style={s.body}>
