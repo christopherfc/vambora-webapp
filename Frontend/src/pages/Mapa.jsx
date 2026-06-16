@@ -25,13 +25,16 @@ const ICONE_TIPO = {
   barco:  Anchor,
 };
 
-function veiculoIcone(tipo) {
+function veiculoIcone(tipo, label) {
   const simbolo = tipo === "van" ? "🚐" : tipo === "barco" ? "⛴" : "🚌";
   const cor = COR_TIPO[tipo] || "#FE8A00";
   return L.divIcon({
     className: "veiculo-marker",
-    html: `<div style="width:34px;height:34px;border-radius:999px;background:${cor};border:3px solid white;box-shadow:0 4px 14px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;font-size:18px">${simbolo}</div>`,
-    iconSize: [34, 34],
+    html: `<div style="display:flex;align-items:center;gap:6px;transform:translate(-17px,-17px);">
+      <div style="width:34px;height:34px;border-radius:999px;background:${cor};border:3px solid white;box-shadow:0 4px 14px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0">${simbolo}</div>
+      <div style="background:white;color:#2D1515;border:1px solid rgba(97,40,40,.16);box-shadow:0 3px 12px rgba(0,0,0,.18);border-radius:999px;padding:4px 8px;font-size:11px;font-weight:900;white-space:nowrap;font-family:Nunito, sans-serif">${label || "Em rota"}</div>
+    </div>`,
+    iconSize: [120, 34],
     iconAnchor: [17, 17],
   });
 }
@@ -232,7 +235,7 @@ export default function Mapa({ onVerHorarios }) {
             <Marker
               key={`veiculo-${veiculo.id}`}
               position={[veiculo.latitude, veiculo.longitude]}
-              icon={veiculoIcone(veiculo.linha?.tipoTransporte)}
+              icon={veiculoIcone(veiculo.linha?.tipoTransporte, veiculo.linha ? `Linha ${veiculo.linha.numero}` : "Em rota")}
             >
               <Popup>
                 <strong>{veiculo.motorista}</strong><br />
