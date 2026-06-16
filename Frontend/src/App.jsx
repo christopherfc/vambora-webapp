@@ -11,6 +11,7 @@ import Perfil from "./pages/Perfil.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
 import MotoristaPanel from "./pages/MotoristaPanel.jsx";
 import { estaLogado, logout, contarNotificacoesNaoLidas, usuarioAtual } from "./services/api.js";
+import { resumeMotoristaTracker, stopMotoristaTracker } from "./services/motoristaTracker.js";
 
 export default function App() {
   const [logado,           setLogado]           = useState(estaLogado());
@@ -33,6 +34,12 @@ export default function App() {
     atualizarNotiCount();
   }, [atualizarNotiCount, abaAtiva]);
 
+  useEffect(() => {
+    if (logado && ["MOTORISTA", "ADMIN"].includes(usuario?.role)) {
+      resumeMotoristaTracker();
+    }
+  }, [logado, usuario?.role]);
+
   function handleEntrar() {
     setCarregando(true);
   }
@@ -44,6 +51,7 @@ export default function App() {
   }
 
   function handleSair() {
+    stopMotoristaTracker().catch(() => {});
     logout();
     setUsuario(null);
     setLogado(false);

@@ -145,7 +145,7 @@ export default function Mapa({ onVerHorarios }) {
       }
     }
     carregarVeiculos();
-    const timer = setInterval(carregarVeiculos, 8000);
+    const timer = setInterval(carregarVeiculos, 5000);
     return () => {
       ativo = false;
       clearInterval(timer);

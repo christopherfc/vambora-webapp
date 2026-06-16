@@ -89,7 +89,7 @@ export const estatisticas = async (req, res) => {
 
 export const veiculosAtivos = async (req, res) => {
   try {
-    const desde = new Date(Date.now() - 2 * 60 * 1000);
+    const desde = new Date(Date.now() - 45 * 1000);
     const veiculos = await prisma.veiculoLocalizacao.findMany({
       where: { ativo: true, atualizadoEm: { gte: desde } },
       include: {

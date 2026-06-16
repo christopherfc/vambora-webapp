@@ -1,10 +1,13 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { MapPin, Navigation, Square, RefreshCw } from "lucide-react";
 import {
-  motoristaAtualizarLocalizacao,
   motoristaListarLinhas,
-  motoristaParar,
 } from "../services/api.js";
+import {
+  startMotoristaTracker,
+  stopMotoristaTracker,
+  subscribeMotoristaTracker,
+} from "../services/motoristaTracker.js";
 
 const s = {
   page: { minHeight: "100vh", background: "var(--cor-fundo)", fontFamily: "var(--font-family)", paddingBottom: 84 },
@@ -24,10 +27,8 @@ const s = {
 export default function MotoristaPanel() {
   const [linhas, setLinhas] = useState([]);
   const [linhaId, setLinhaId] = useState("");
-  const [ativo, setAtivo] = useState(false);
-  const [ultima, setUltima] = useState(null);
+  const [tracker, setTracker] = useState({ ativo: false, trip: null, ultima: null, erro: "" });
   const [msg, setMsg] = useState("");
-  const watchId = useRef(null);
 
   async function carregarLinhas() {
     try {
@@ -41,21 +42,8 @@ export default function MotoristaPanel() {
 
   useEffect(() => {
     carregarLinhas();
-    return () => {
-      if (watchId.current !== null) navigator.geolocation.clearWatch(watchId.current);
-    };
+    return subscribeMotoristaTracker(setTracker);
   }, []);
-
-  async function enviar(pos) {
-    const payload = {
-      linhaId: Number(linhaId),
-      latitude: pos.coords.latitude,
-      longitude: pos.coords.longitude,
-      precisao: pos.coords.accuracy,
-    };
-    await motoristaAtualizarLocalizacao(payload);
-    setUltima({ ...payload, horario: new Date() });
-  }
 
   function iniciar() {
     setMsg("");
@@ -63,29 +51,17 @@ export default function MotoristaPanel() {
       setMsg("Selecione uma linha antes de iniciar.");
       return;
     }
-    if (!navigator.geolocation) {
-      setMsg("Seu navegador nao suporta geolocalizacao.");
-      return;
-    }
-
-    watchId.current = navigator.geolocation.watchPosition(
-      (pos) => enviar(pos).catch((error) => setMsg(error.message)),
-      (error) => setMsg(error.message || "Nao foi possivel obter sua localizacao."),
-      { enableHighAccuracy: true, maximumAge: 5000, timeout: 15000 }
-    );
-    setAtivo(true);
+    const linha = linhas.find((item) => String(item.id) === String(linhaId));
+    startMotoristaTracker(linhaId, linha?.nome || "").catch((error) => setMsg(error.message));
   }
 
   async function parar() {
-    if (watchId.current !== null) {
-      navigator.geolocation.clearWatch(watchId.current);
-      watchId.current = null;
-    }
-    setAtivo(false);
-    await motoristaParar().catch(() => {});
+    await stopMotoristaTracker().catch((error) => setMsg(error.message));
   }
 
-  const linhaAtual = linhas.find((linha) => String(linha.id) === String(linhaId));
+  const ativo = tracker.ativo;
+  const ultima = tracker.ultima;
+  const linhaAtual = linhas.find((linha) => String(linha.id) === String(tracker.trip?.linhaId || linhaId));
 
   return (
     <div style={s.page}>
@@ -96,7 +72,7 @@ export default function MotoristaPanel() {
       <div style={s.body}>
         <div style={s.panel}>
           <div style={s.label}>Linha em operacao</div>
-          <select style={s.select} value={linhaId} onChange={(e) => setLinhaId(e.target.value)} disabled={ativo}>
+          <select style={s.select} value={tracker.trip?.linhaId || linhaId} onChange={(e) => setLinhaId(e.target.value)} disabled={ativo}>
             {linhas.length === 0 && <option value="">Nenhuma linha vinculada</option>}
             {linhas.map((linha) => (
               <option key={linha.id} value={linha.id}>Linha {linha.numero} - {linha.nome}</option>
@@ -105,7 +81,7 @@ export default function MotoristaPanel() {
 
           <div style={s.status}>
             <span style={s.dot(ativo)} />
-            {ativo ? `Compartilhando ${linhaAtual?.nome || ""}` : "Compartilhamento parado"}
+            {ativo ? `Compartilhando ${linhaAtual?.nome || tracker.trip?.linhaNome || ""}` : "Compartilhamento parado"}
           </div>
 
           {!ativo ? (
@@ -124,7 +100,7 @@ export default function MotoristaPanel() {
           </div>
         )}
 
-        {msg && <div style={s.msg}>{msg}</div>}
+        {(msg || tracker.erro) && <div style={s.msg}>{msg || tracker.erro}</div>}
       </div>
     </div>
   );
