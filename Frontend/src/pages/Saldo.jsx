@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { Bus, Truck, Anchor, Zap, Plus, FileText } from "lucide-react";
+import QRCode from "qrcode";
 import { buscarSaldo, buscarTransacoes, alterarTipoCartao } from "../services/api.js";
 
 const CONFIG_TIPO = {
@@ -57,7 +58,7 @@ function formatarData(dataISO) {
 }
 
 // ─── Cartão Vambora ───────────────────────────────────────────────────────────
-function CartaoVambora({ saldo, tipoCartao }) {
+function CartaoVambora({ saldo, tipoCartao, numeroCartao }) {
   return (
     <div style={{
       margin: "0 16px",
@@ -106,7 +107,7 @@ function CartaoVambora({ saldo, tipoCartao }) {
         <div>
           <div style={{ fontSize: 10, fontWeight: 700, color: "rgba(255,255,255,0.4)", letterSpacing: 0.8, marginBottom: 3 }}>CARTÃO DE TRANSPORTE</div>
           <div style={{ fontSize: 13, fontWeight: 800, color: "rgba(255,255,255,0.75)", letterSpacing: 2.5, fontFamily: "monospace" }}>
-            ••••  ••••  ••••  4281
+            ••••  ••••  ••••  {numeroCartao || "----"}
           </div>
         </div>
         <div style={{ background: "rgba(254,138,0,0.25)", border: "1px solid rgba(254,138,0,0.5)", borderRadius: 8, padding: "4px 10px" }}>
@@ -139,11 +140,16 @@ const s = {
   infoData:     { fontSize: 11, color: "var(--cor-texto-suave)", fontWeight: 600 },
   valor:        (pos) => ({ fontSize: 15, fontWeight: 900, color: pos ? "var(--cor-sucesso)" : "var(--cor-texto)", flexShrink: 0 }),
   loading:      { textAlign: "center", padding: "48px 0", color: "var(--cor-primaria)", fontSize: 14, fontWeight: 800 },
+  qrCard:       { margin: "14px 16px 0", background: "#fff", borderRadius: 16, padding: 16, boxShadow: "var(--shadow-sm)", textAlign: "center" },
+  qrImg:        { width: 190, height: 190, margin: "8px auto", display: "block" },
+  qrCodeText:   { fontSize: 13, fontWeight: 900, color: "var(--cor-vinho)", letterSpacing: 1 },
 };
 
 export default function Saldo() {
   const [tipoCartao,  setTipoCartao]  = useState("Comum");
   const [saldo,       setSaldo]       = useState(0);
+  const [numeroCartao,setNumeroCartao]= useState("");
+  const [qrSrc,       setQrSrc]       = useState("");
   const [transacoes,  setTransacoes]  = useState([]);
   const [carregando,  setCarregando]  = useState(true);
 
@@ -157,6 +163,7 @@ export default function Saldo() {
         ]);
         setSaldo(dadosSaldo.saldo);
         if (dadosSaldo.cartao?.tipo) setTipoCartao(dadosSaldo.cartao.tipo);
+        if (dadosSaldo.cartao?.numero) setNumeroCartao(dadosSaldo.cartao.numero);
         setTransacoes(dadosTransacoes.transacoes || []);
       } catch (e) {
         console.error(e);
@@ -166,6 +173,13 @@ export default function Saldo() {
     }
     carregar();
   }, []);
+
+  useEffect(() => {
+    if (!numeroCartao) return;
+    QRCode.toDataURL(numeroCartao, { margin: 1, width: 220 })
+      .then(setQrSrc)
+      .catch(() => setQrSrc(""));
+  }, [numeroCartao]);
 
   async function handleTipoCartao(tipo) {
     setTipoCartao(tipo);
@@ -197,7 +211,13 @@ export default function Saldo() {
         <div style={s.headerTitulo}>Meu Saldo</div>
       </div>
 
-      <CartaoVambora saldo={saldo} tipoCartao={tipoCartao} />
+      <CartaoVambora saldo={saldo} tipoCartao={tipoCartao} numeroCartao={numeroCartao} />
+
+      <div style={s.qrCard}>
+        <div style={s.secLabel}>QR Code do cartao</div>
+        {qrSrc && <img src={qrSrc} alt="QR Code do cartao" style={s.qrImg} />}
+        <div style={s.qrCodeText}>{numeroCartao}</div>
+      </div>
 
       <div style={s.acoes}>
         <div style={s.chipRow}>

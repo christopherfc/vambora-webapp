@@ -1,4 +1,4 @@
-import { Bus, MapPin, CreditCard, Bell, User, Shield, Navigation } from "lucide-react";
+import { Bus, MapPin, CreditCard, Bell, User, Shield, Navigation, ScanLine } from "lucide-react";
 
 const ABAS = [
   { id: "rotas",         label: "Rotas",  Icone: Bus        },
@@ -26,10 +26,11 @@ const s = {
   },
 };
 
-export default function BottomNav({ abaAtiva, onMudar, notificacoes = 0, admin = false, motorista = false }) {
+export default function BottomNav({ abaAtiva, onMudar, notificacoes = 0, admin = false, motorista = false, cobrador = false }) {
   const abas = [
     ...ABAS,
     ...(motorista ? [{ id: "motorista", label: "Motor", Icone: Navigation }] : []),
+    ...(cobrador ? [{ id: "cobrador", label: "Cobrar", Icone: ScanLine }] : []),
     ...(admin ? [{ id: "admin", label: "Admin", Icone: Shield }] : []),
   ];
   return (

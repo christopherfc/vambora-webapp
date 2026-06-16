@@ -126,6 +126,24 @@ export async function motoristaParar() {
   return data;
 }
 
+export async function cobradorListarLinhas() {
+  const res = await fetch(`${API_URL}/cobrador/linhas`, { headers: headers(true) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao buscar linhas do cobrador");
+  return data;
+}
+
+export async function cobradorCobrar(dados) {
+  const res = await fetch(`${API_URL}/cobrador/cobrar`, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify(dados),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao cobrar passagem");
+  return data;
+}
+
 // ── Perfil ─────────────────────────────────────────────────────────────────────
 
 export async function buscarPerfil() {

@@ -486,6 +486,17 @@ export default function AdminPanel() {
     });
   }
 
+  function toggleLinhaCobrador(linhaId) {
+    const atuais = usuarioEditando?.cobradorLinhas || [];
+    const existe = atuais.map(String).includes(String(linhaId));
+    setUsuarioEditando({
+      ...usuarioEditando,
+      cobradorLinhas: existe
+        ? atuais.filter((id) => String(id) !== String(linhaId))
+        : [...atuais, linhaId],
+    });
+  }
+
   const tabs = useMemo(() => [
     { id: "linhas", label: "Linhas", Icone: Route },
     { id: "faqs", label: "FAQ", Icone: HelpCircle },
@@ -591,7 +602,7 @@ export default function AdminPanel() {
                 <label style={s.field}><span style={s.label}>Email</span><input style={s.input} value={usuarioEditando.email} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, email: e.target.value })} /></label>
                 <label style={s.field}><span style={s.label}>Telefone</span><input style={s.input} value={usuarioEditando.telefone || ""} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, telefone: e.target.value })} /></label>
                 <div style={s.row}>
-                  <label style={s.field}><span style={s.label}>Role</span><select style={s.input} value={usuarioEditando.role} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, role: e.target.value })}><option value="USER">USER</option><option value="MOTORISTA">MOTORISTA</option><option value="ADMIN">ADMIN</option></select></label>
+                  <label style={s.field}><span style={s.label}>Role</span><select style={s.input} value={usuarioEditando.role} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, role: e.target.value })}><option value="USER">USER</option><option value="MOTORISTA">MOTORISTA</option><option value="COBRADOR">COBRADOR</option><option value="ADMIN">ADMIN</option></select></label>
                   <label style={s.field}><span style={s.label}>Saldo</span><input style={s.input} type="number" step="0.01" value={usuarioEditando.cartao?.saldo ?? usuarioEditando.saldo ?? 0} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, saldo: e.target.value })} /></label>
                 </div>
                 {usuarioEditando.role === "MOTORISTA" && (
@@ -604,6 +615,23 @@ export default function AdminPanel() {
                         return (
                           <label key={linha.id} style={{ ...s.item(marcado), display: "flex", alignItems: "center", gap: 10 }}>
                             <input type="checkbox" checked={marcado} onChange={() => toggleLinhaMotorista(linha.id)} />
+                            <span style={s.itemTitle}>Linha {linha.numero} - {linha.nome}</span>
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+                {usuarioEditando.role === "COBRADOR" && (
+                  <div style={s.field}>
+                    <span style={s.label}>Linhas permitidas para o cobrador</span>
+                    <div style={s.list}>
+                      {linhas.length === 0 && <div style={s.itemSub}>Cadastre linhas antes de vincular cobradores.</div>}
+                      {linhas.map((linha) => {
+                        const marcado = (usuarioEditando.cobradorLinhas || []).map(String).includes(String(linha.id));
+                        return (
+                          <label key={linha.id} style={{ ...s.item(marcado), display: "flex", alignItems: "center", gap: 10 }}>
+                            <input type="checkbox" checked={marcado} onChange={() => toggleLinhaCobrador(linha.id)} />
                             <span style={s.itemTitle}>Linha {linha.numero} - {linha.nome}</span>
                           </label>
                         );

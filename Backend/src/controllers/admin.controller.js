@@ -214,7 +214,7 @@ export const removerNotificacaoAdmin = async (req, res) => {
 export const listarUsuariosAdmin = async (req, res) => {
   try {
     const usuarios = await prisma.user.findMany({
-      include: { linhasMotorista: true },
+      include: { linhasMotorista: true, linhasCobrador: true },
       orderBy: { nome: "asc" },
     });
     res.json({ usuarios: usuarios.map(serializarUsuario) });
@@ -226,9 +226,12 @@ export const listarUsuariosAdmin = async (req, res) => {
 export const atualizarUsuarioAdmin = async (req, res) => {
   try {
     const id = Number(req.params.id);
-    const role = ["ADMIN", "MOTORISTA"].includes(req.body.role) ? req.body.role : "USER";
+    const role = ["ADMIN", "MOTORISTA", "COBRADOR"].includes(req.body.role) ? req.body.role : "USER";
     const linhaIds = Array.isArray(req.body.motoristaLinhas)
       ? req.body.motoristaLinhas.map(Number).filter(Number.isFinite)
+      : [];
+    const cobradorLinhaIds = Array.isArray(req.body.cobradorLinhas)
+      ? req.body.cobradorLinhas.map(Number).filter(Number.isFinite)
       : [];
 
     const usuario = await prisma.$transaction(async (tx) => {
@@ -244,9 +247,16 @@ export const atualizarUsuarioAdmin = async (req, res) => {
       });
 
       await tx.motoristaLinha.deleteMany({ where: { usuarioId: id } });
+      await tx.cobradorLinha.deleteMany({ where: { usuarioId: id } });
       if (role === "MOTORISTA" && linhaIds.length) {
         await tx.motoristaLinha.createMany({
           data: linhaIds.map((linhaId) => ({ usuarioId: id, linhaId })),
+          skipDuplicates: true,
+        });
+      }
+      if (role === "COBRADOR" && cobradorLinhaIds.length) {
+        await tx.cobradorLinha.createMany({
+          data: cobradorLinhaIds.map((linhaId) => ({ usuarioId: id, linhaId })),
           skipDuplicates: true,
         });
       }
@@ -254,7 +264,7 @@ export const atualizarUsuarioAdmin = async (req, res) => {
         await tx.veiculoLocalizacao.deleteMany({ where: { usuarioId: id } });
       }
 
-      return tx.user.findUnique({ where: { id }, include: { linhasMotorista: true } });
+      return tx.user.findUnique({ where: { id }, include: { linhasMotorista: true, linhasCobrador: true } });
     });
     res.json({ usuario: serializarUsuario(usuario) });
   } catch (error) {

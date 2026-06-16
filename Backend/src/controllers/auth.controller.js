@@ -3,6 +3,15 @@ import jwt from "jsonwebtoken";
 import prisma from "../config/prisma.js";
 import { serializarUsuario } from "../utils/serializers.js";
 
+async function gerarCartaoNumero() {
+  for (let i = 0; i < 10; i += 1) {
+    const numero = String(Math.floor(100000 + Math.random() * 900000));
+    const existente = await prisma.user.findUnique({ where: { cartaoNumero: numero } });
+    if (!existente) return numero;
+  }
+  return String(Date.now()).slice(-8);
+}
+
 export const registrar = async (req, res) => {
   try {
     const { nome, email, senha, telefone } = req.body;
@@ -23,7 +32,7 @@ export const registrar = async (req, res) => {
         email: email.toLowerCase(),
         senha: hash,
         telefone: telefone || "",
-        cartaoNumero: String(Math.floor(1000 + Math.random() * 9000)),
+        cartaoNumero: await gerarCartaoNumero(),
       },
     });
 

@@ -25,13 +25,16 @@ model User {
   notificacoesHorarios   Boolean        @default(true)
   alertasTarifa          Boolean        @default(false)
   newsletter             Boolean        @default(false)
-  cartaoNumero           String         @default("4281")
+  cartaoNumero           String         @unique @default("4281")
   cartaoTipo             CartaoTipo     @default(COMUM)
   saldo                  Decimal        @default(0) @db.Decimal(10, 2)
   transacoes             Transacao[]
   notificacoes           Notificacao[]
   linhasMotorista        MotoristaLinha[]
+  linhasCobrador         CobradorLinha[]
   localizacaoVeiculo     VeiculoLocalizacao?
+  cobrancasFeitas        Cobranca[]     @relation("CobradorCobrancas")
+  cobrancasRecebidas     Cobranca[]     @relation("PassageiroCobrancas")
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
@@ -52,7 +55,9 @@ model Linha {
   paradas         LinhaParada[]
   horarios        Horario[]
   motoristas      MotoristaLinha[]
+  cobradores      CobradorLinha[]
   veiculosAtivos  VeiculoLocalizacao[]
+  cobrancas       Cobranca[]
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
@@ -164,10 +169,41 @@ model VeiculoLocalizacao {
   @@map("veiculo_localizacoes")
 }
 
+model CobradorLinha {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  linhaId   Int
+  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  linha     Linha    @relation(fields: [linhaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([usuarioId, linhaId])
+  @@map("cobrador_linhas")
+}
+
+model Cobranca {
+  id           Int            @id @default(autoincrement())
+  cobradorId   Int
+  passageiroId Int
+  linhaId      Int
+  valor        Decimal        @db.Decimal(10, 2)
+  status       StatusCobranca @default(APROVADA)
+  codigoCartao String
+  data         DateTime       @default(now())
+  cobrador     User           @relation("CobradorCobrancas", fields: [cobradorId], references: [id], onDelete: Cascade)
+  passageiro   User           @relation("PassageiroCobrancas", fields: [passageiroId], references: [id], onDelete: Cascade)
+  linha        Linha          @relation(fields: [linhaId], references: [id], onDelete: Cascade)
+
+  @@index([cobradorId, data])
+  @@index([passageiroId, data])
+  @@map("cobrancas")
+}
+
 enum Role {
   USER
   ADMIN
   MOTORISTA
+  COBRADOR
 }
 
 enum TipoTransporte {
@@ -199,4 +235,9 @@ enum TipoTransacao {
   van
   barco
   recarga
+}
+
+enum StatusCobranca {
+  APROVADA
+  RECUSADA
 }

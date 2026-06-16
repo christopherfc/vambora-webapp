@@ -10,6 +10,7 @@ import Notificacoes from "./pages/Notificacoes.jsx";
 import Perfil from "./pages/Perfil.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
 import MotoristaPanel from "./pages/MotoristaPanel.jsx";
+import CobradorPanel from "./pages/CobradorPanel.jsx";
 import { estaLogado, logout, contarNotificacoesNaoLidas, usuarioAtual } from "./services/api.js";
 import { resumeMotoristaTracker, stopMotoristaTracker } from "./services/motoristaTracker.js";
 
@@ -91,6 +92,7 @@ export default function App() {
       {abaAtiva === "notificacoes" && <Notificacoes onAtualizar={atualizarNotiCount} />}
       {abaAtiva === "perfil"       && <Perfil onSair={handleSair} />}
       {abaAtiva === "motorista"    && ["MOTORISTA", "ADMIN"].includes(usuario?.role) && <MotoristaPanel />}
+      {abaAtiva === "cobrador"     && ["COBRADOR", "ADMIN"].includes(usuario?.role) && <CobradorPanel />}
       {abaAtiva === "admin"        && usuario?.role === "ADMIN" && <AdminPanel />}
 
       <BottomNav
@@ -99,6 +101,7 @@ export default function App() {
         notificacoes={notiCount}
         admin={usuario?.role === "ADMIN"}
         motorista={["MOTORISTA", "ADMIN"].includes(usuario?.role)}
+        cobrador={["COBRADOR", "ADMIN"].includes(usuario?.role)}
       />
     </>
   );

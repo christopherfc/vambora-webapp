@@ -28,6 +28,7 @@ export function serializarUsuario(usuario) {
       saldo: Number(safe.saldo || 0),
     },
     motoristaLinhas: (safe.linhasMotorista || []).map((item) => item.linhaId),
+    cobradorLinhas: (safe.linhasCobrador || []).map((item) => item.linhaId),
     createdAt: safe.createdAt,
     updatedAt: safe.updatedAt,
   };
