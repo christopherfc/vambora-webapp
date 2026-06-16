@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useRef, useState, useEffect } from "react";
 import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from "react-leaflet";
 import { Bus, Truck, Anchor, ArrowRight, X, Clock } from "lucide-react";
 import L from "leaflet";
@@ -37,6 +37,60 @@ function veiculoIcone(tipo, label) {
     iconSize: [120, 34],
     iconAnchor: [17, 17],
   });
+}
+
+function AnimatedVehicleMarker({ veiculo }) {
+  const markerRef = useRef(null);
+  const currentPos = useRef([veiculo.latitude, veiculo.longitude]);
+  const animationRef = useRef(null);
+  const target = [veiculo.latitude, veiculo.longitude];
+
+  useEffect(() => {
+    const marker = markerRef.current;
+    if (!marker) {
+      currentPos.current = target;
+      return;
+    }
+
+    if (animationRef.current) cancelAnimationFrame(animationRef.current);
+
+    const start = currentPos.current;
+    const end = target;
+    const startedAt = performance.now();
+    const duration = 2600;
+
+    function animate(now) {
+      const progress = Math.min((now - startedAt) / duration, 1);
+      const eased = 1 - Math.pow(1 - progress, 3);
+      const lat = start[0] + (end[0] - start[0]) * eased;
+      const lng = start[1] + (end[1] - start[1]) * eased;
+      marker.setLatLng([lat, lng]);
+      currentPos.current = [lat, lng];
+      if (progress < 1) {
+        animationRef.current = requestAnimationFrame(animate);
+      } else {
+        currentPos.current = end;
+      }
+    }
+
+    animationRef.current = requestAnimationFrame(animate);
+    return () => {
+      if (animationRef.current) cancelAnimationFrame(animationRef.current);
+    };
+  }, [veiculo.latitude, veiculo.longitude]);
+
+  return (
+    <Marker
+      ref={markerRef}
+      position={currentPos.current}
+      icon={veiculoIcone(veiculo.linha?.tipoTransporte, veiculo.linha ? `Linha ${veiculo.linha.numero}` : "Em rota")}
+    >
+      <Popup>
+        <strong>{veiculo.motorista}</strong><br />
+        {veiculo.linha ? `Linha ${veiculo.linha.numero} - ${veiculo.linha.nome}` : "Linha em operacao"}
+      </Popup>
+    </Marker>
+  );
 }
 
 const CHIPS = [
@@ -241,16 +295,7 @@ export default function Mapa({ onVerHorarios }) {
           )))}
 
           {veiculosFiltrados.map((veiculo) => (
-            <Marker
-              key={`veiculo-${veiculo.id}`}
-              position={[veiculo.latitude, veiculo.longitude]}
-              icon={veiculoIcone(veiculo.linha?.tipoTransporte, veiculo.linha ? `Linha ${veiculo.linha.numero}` : "Em rota")}
-            >
-              <Popup>
-                <strong>{veiculo.motorista}</strong><br />
-                {veiculo.linha ? `Linha ${veiculo.linha.numero} - ${veiculo.linha.nome}` : "Linha em operacao"}
-              </Popup>
-            </Marker>
+            <AnimatedVehicleMarker key={`veiculo-${veiculo.id}`} veiculo={veiculo} />
           ))}
         </MapContainer>
 
