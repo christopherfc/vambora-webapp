@@ -5,16 +5,16 @@ const auth = (req, res, next) => {
     const authHeader = req.headers.authorization;
 
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ mensagem: "Token não fornecido" });
+      return res.status(401).json({ mensagem: "Token nao fornecido" });
     }
 
     const token = authHeader.split(" ")[1];
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-    req.usuario = decoded.id;
+    req.usuario = Number(decoded.id);
     next();
   } catch (error) {
-    return res.status(401).json({ mensagem: "Token inválido ou expirado" });
+    return res.status(401).json({ mensagem: "Token invalido ou expirado" });
   }
 };
 

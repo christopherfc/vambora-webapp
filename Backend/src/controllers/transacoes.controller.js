@@ -1,18 +1,18 @@
-import Usuario from "../models/Usuario.js";
-import Transacao from "../models/Transacao.js";
+import prisma from "../config/prisma.js";
+import { fromCartaoTipo, serializarTransacao } from "../utils/serializers.js";
 
 export const obterSaldo = async (req, res) => {
   try {
-    const usuario = await Usuario.findById(req.usuario).select("cartao");
+    const usuario = await prisma.user.findUnique({ where: { id: req.usuario } });
     if (!usuario) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
+      return res.status(404).json({ mensagem: "Usuario nao encontrado" });
     }
 
     res.json({
-      saldo: usuario.cartao.saldo,
+      saldo: Number(usuario.saldo),
       cartao: {
-        numero: usuario.cartao.numero,
-        tipo: usuario.cartao.tipo,
+        numero: usuario.cartaoNumero,
+        tipo: fromCartaoTipo(usuario.cartaoTipo),
       },
     });
   } catch (error) {
@@ -22,14 +22,15 @@ export const obterSaldo = async (req, res) => {
 
 export const listarTransacoes = async (req, res) => {
   try {
-    const limite = parseInt(req.query.limite) || 10;
+    const limite = parseInt(req.query.limite, 10) || 10;
+    const transacoes = await prisma.transacao.findMany({
+      where: { usuarioId: req.usuario },
+      orderBy: { data: "desc" },
+      take: limite,
+    });
 
-    const transacoes = await Transacao.find({ usuario: req.usuario })
-      .sort({ data: -1 })
-      .limit(limite);
-
-    res.json({ transacoes });
+    res.json({ transacoes: transacoes.map(serializarTransacao) });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao buscar transações" });
+    res.status(500).json({ mensagem: "Erro ao buscar transacoes" });
   }
 };

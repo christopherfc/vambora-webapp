@@ -1,18 +1,20 @@
-# ── Build / Deps ────────────────────────────────────────────────────────────────
 FROM node:20-alpine AS deps
 WORKDIR /app
+RUN apk add --no-cache openssl
 COPY package.json package-lock.json ./
-RUN npm ci --omit=dev
+RUN npm ci
 
-# ── Runtime ─────────────────────────────────────────────────────────────────────
 FROM node:20-alpine
 WORKDIR /app
+RUN apk add --no-cache openssl
 
-# Copiar dependências do stage anterior
 COPY --from=deps /app/node_modules ./node_modules
 COPY package.json ./
+COPY prisma ./prisma
 COPY src ./src
+
+RUN npx prisma generate
 
 EXPOSE 3001
 
-CMD ["node", "src/server.js"]
+CMD ["sh", "-c", "npx prisma migrate deploy && node src/server.js"]

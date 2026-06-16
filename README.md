@@ -1,147 +1,95 @@
-# 🚌 Vambora Penedo
+# Vambora Penedo
 
-> Sistema de transporte público de Penedo, Alagoas.
+Sistema web/mobile-first para consulta e administracao de transporte publico em Penedo, Alagoas.
 
----
+## Estrutura
 
-## 📁 Estrutura
-
-```
-├── Backend/             # API Node.js + Express + MongoDB
-├── Frontend/            # React + Vite (mobile-first)
-├── docker-compose.yml   # Sobe tudo com um comando
-├── .env.example         # Template de variáveis de ambiente
-└── README.md
+```txt
+Backend/             API Node.js + Express + Prisma + MySQL
+Frontend/            React + Vite
+docker-compose.yml   Sobe MySQL, API e frontend
+.env.example         Template de variaveis de ambiente
 ```
 
----
-
-## ⚙️ Instalação do Docker
-
-Você precisa do **Docker Desktop** instalado. Ele já inclui o Docker Compose.
-
-| Sistema  | Link de Download |
-|----------|-----------------|
-| Windows  | [Docker Desktop para Windows](https://desktop.docker.com/win/main/amd64/Docker%20Desktop%20Installer.exe) |
-| macOS    | [Docker Desktop para macOS](https://docs.docker.com/desktop/install/mac-install/) |
-| Linux    | [Docker Engine para Linux](https://docs.docker.com/engine/install/) |
-
-Após instalar, verifique se está funcionando:
-
-```bash
-docker --version
-docker compose version
-```
-
----
-
-## 🚀 Como Rodar o Projeto
-
-### 1. Clone o repositório
-
-```bash
-git clone https://github.com/SEU_USUARIO/vambora-penedo.git
-cd vambora-penedo
-```
-
-### 2. Suba todos os serviços
+## Como Rodar com Docker
 
 ```bash
 docker compose up --build
 ```
 
-Pronto! Aguarde o build terminar e acesse:
+Servicos:
 
-| Serviço    | URL                        |
-|------------|----------------------------|
-| **Frontend**   | http://localhost:5173   |
-| **Backend**    | http://localhost:3001   |
-| **MongoDB**    | localhost:27017         |
+| Servico | URL |
+| --- | --- |
+| Frontend | http://localhost:5173 |
+| Backend | http://localhost:3001 |
+| MySQL | localhost:3306 |
 
-### 3. Popular o banco com dados de exemplo (seed)
+Na primeira subida, o backend executa as migrations do Prisma e cria o administrador inicial definido no `.env`.
 
-Em **outro terminal**, rode:
-
-```bash
-docker compose --profile seed up seed
-```
-
-Isso cria um usuário de teste e dados mockados:
+Admin padrao de desenvolvimento:
 
 | Campo | Valor |
-|-------|-------|
-| Email | `joao@email.com` |
-| Senha | `123456` |
+| --- | --- |
+| Email | `admin@vambora.local` |
+| Senha | `admin123` |
 
-> Se quiser rodar o seed novamente, ele limpa os dados antigos antes de inserir novos.
+Depois de logar como admin, a aba **Admin** fica disponivel no app para cadastrar, editar e remover linhas, rotas, horarios, FAQs, notificacoes e informacoes basicas de usuarios. Os dados operacionais deixam de ser mockados por seed e passam a ser gerenciados pelo painel.
 
-### 4. Parar os serviços
-
-```bash
-docker compose down
-```
-
-Para parar **e apagar os dados do banco**:
+## Desenvolvimento Local
 
 ```bash
-docker compose down -v
-```
+# Terminal 1: banco
+docker compose up mysql
 
----
-
-## 🛠️ Desenvolvimento Local (sem Docker)
-
-Se preferir rodar apenas o MongoDB no Docker e o resto local:
-
-```bash
-# Terminal 1 — Banco
-docker compose up mongodb
-
-# Terminal 2 — Backend
+# Terminal 2: backend
 cd Backend
 npm install
+npx prisma migrate deploy
 npm run dev
 
-# Terminal 3 — Frontend
+# Terminal 3: frontend
 cd Frontend
 npm install
 npm run dev
-
-# Seed (local)
-cd Backend
-npm run seed
 ```
 
----
+Para criar ou atualizar o admin inicial manualmente:
 
-## 🔑 Variáveis de Ambiente
+```bash
+cd Backend
+npm run bootstrap:admin
+```
 
-| Variável         | Padrão                           | Descrição                 |
-|------------------|----------------------------------|---------------------------|
-| `MONGO_USER`     | `admin`                          | Usuário root do MongoDB   |
-| `MONGO_PASSWORD` | `admin123`                       | Senha root do MongoDB     |
-| `JWT_SECRET`     | `vambora-penedo-secret-key-2025` | Chave para assinar tokens |
-| `NODE_ENV`       | `development`                    | Ambiente da aplicação     |
+## Variaveis de Ambiente
 
----
+| Variavel | Padrao | Descricao |
+| --- | --- | --- |
+| `MYSQL_ROOT_PASSWORD` | `root123` | Senha root do MySQL no Docker |
+| `MYSQL_DATABASE` | `vambora_penedo` | Banco da aplicacao |
+| `MYSQL_USER` | `vambora` | Usuario da aplicacao |
+| `MYSQL_PASSWORD` | `vambora123` | Senha do usuario da aplicacao |
+| `DATABASE_URL` | ver `Backend/.env.example` | URL Prisma para conexao MySQL |
+| `JWT_SECRET` | `vambora-penedo-secret-key-2025` | Chave para assinar tokens |
+| `ADMIN_EMAIL` | `admin@vambora.local` | Email do admin inicial |
+| `ADMIN_PASSWORD` | `admin123` | Senha do admin inicial |
+| `ADMIN_NAME` | `Administrador` | Nome do admin inicial |
 
-## 📌 Endpoints da API
+## Principais Endpoints
 
-| Método | Rota                                 | Auth | Descrição             |
-|--------|--------------------------------------|:----:|-----------------------|
-| POST   | `/api/auth/login`                   | ❌   | Login                 |
-| POST   | `/api/auth/registrar`               | ❌   | Cadastro              |
-| GET    | `/api/linhas`                       | ❌   | Listar linhas         |
-| GET    | `/api/linhas/:id/horarios`          | ❌   | Horários de uma linha |
-| GET    | `/api/linhas/estatisticas`          | ❌   | Estatísticas          |
-| GET    | `/api/usuario/perfil`               | ✅   | Perfil do usuário     |
-| PUT    | `/api/usuario/perfil`               | ✅   | Atualizar perfil      |
-| GET    | `/api/usuario/saldo`                | ✅   | Consultar saldo       |
-| GET    | `/api/usuario/notificacoes`         | ✅   | Notificações          |
-| GET    | `/api/faq`                          | ❌   | FAQ                   |
+| Metodo | Rota | Auth | Descricao |
+| --- | --- | :---: | --- |
+| POST | `/api/auth/login` | Nao | Login |
+| POST | `/api/auth/registrar` | Nao | Cadastro |
+| GET | `/api/linhas` | Nao | Listar linhas ativas |
+| GET | `/api/linhas/:id/horarios` | Nao | Horarios de uma linha |
+| GET | `/api/usuario/perfil` | Sim | Perfil do usuario |
+| GET | `/api/usuario/saldo` | Sim | Saldo/cartao |
+| GET | `/api/faq` | Nao | FAQ publica |
+| `/api/admin/*` | Sim/Admin | CRUD administrativo |
 
----
+## Observacoes
 
-## 👥 Equipe
-
-Projeto desenvolvido para a UFAL — Universidade Federal de Alagoas.
+- O banco atual e MySQL 8.
+- Prisma gerencia o schema relacional e as migrations.
+- O seed mockado foi removido. O bootstrap cria apenas o admin inicial.

@@ -1,4 +1,4 @@
-import { Bus, MapPin, CreditCard, Bell, User } from "lucide-react";
+import { Bus, MapPin, CreditCard, Bell, User, Shield } from "lucide-react";
 
 const ABAS = [
   { id: "rotas",         label: "Rotas",  Icone: Bus        },
@@ -26,10 +26,11 @@ const s = {
   },
 };
 
-export default function BottomNav({ abaAtiva, onMudar, notificacoes = 0 }) {
+export default function BottomNav({ abaAtiva, onMudar, notificacoes = 0, admin = false }) {
+  const abas = admin ? [...ABAS, { id: "admin", label: "Admin", Icone: Shield }] : ABAS;
   return (
     <nav style={s.nav}>
-      {ABAS.map(({ id, label, Icone }) => {
+      {abas.map(({ id, label, Icone }) => {
         const ativo = abaAtiva === id;
         const cor   = ativo ? "var(--cor-primaria)" : "var(--cor-texto-suave)";
         return (

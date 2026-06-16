@@ -1,0 +1,155 @@
+generator client {
+  provider      = "prisma-client-js"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                     Int            @id @default(autoincrement())
+  nome                   String
+  email                  String         @unique
+  senha                  String
+  telefone               String         @default("")
+  role                   Role           @default(USER)
+  cep                    String         @default("")
+  rua                    String         @default("")
+  numeroEndereco         String         @default("")
+  complemento            String         @default("")
+  bairro                 String         @default("")
+  cidade                 String         @default("Penedo")
+  estado                 String         @default("AL")
+  notificacoesHorarios   Boolean        @default(true)
+  alertasTarifa          Boolean        @default(false)
+  newsletter             Boolean        @default(false)
+  cartaoNumero           String         @default("4281")
+  cartaoTipo             CartaoTipo     @default(COMUM)
+  saldo                  Decimal        @default(0) @db.Decimal(10, 2)
+  transacoes             Transacao[]
+  notificacoes           Notificacao[]
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+
+  @@map("users")
+}
+
+model Linha {
+  id              Int          @id @default(autoincrement())
+  numero          Int
+  nome            String
+  tipoTransporte  TipoTransporte
+  tarifa          Decimal      @db.Decimal(10, 2)
+  infoPagamento   String
+  origem          String
+  destino         String
+  ativo           Boolean      @default(true)
+  pontos          RotaPonto[]
+  horarios        Horario[]
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  @@map("linhas")
+}
+
+model RotaPonto {
+  id        Int      @id @default(autoincrement())
+  linhaId   Int
+  ordem     Int
+  latitude  Decimal  @db.Decimal(10, 7)
+  longitude Decimal  @db.Decimal(10, 7)
+  linha     Linha    @relation(fields: [linhaId], references: [id], onDelete: Cascade)
+
+  @@unique([linhaId, ordem])
+  @@map("rota_pontos")
+}
+
+model Horario {
+  id       Int       @id @default(autoincrement())
+  linhaId  Int
+  tipoDia  TipoDia
+  horario  String
+  ordem    Int       @default(0)
+  linha    Linha     @relation(fields: [linhaId], references: [id], onDelete: Cascade)
+
+  @@index([linhaId, tipoDia])
+  @@map("horarios")
+}
+
+model Faq {
+  id        Int      @id @default(autoincrement())
+  pergunta  String
+  resposta  String   @db.Text
+  ordem     Int      @default(0)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("faqs")
+}
+
+model Notificacao {
+  id        Int              @id @default(autoincrement())
+  usuarioId Int?
+  tipo      TipoNotificacao
+  titulo    String
+  descricao String           @db.Text
+  lida      Boolean          @default(false)
+  data      DateTime         @default(now())
+  usuario   User?            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+
+  @@map("notificacoes")
+}
+
+model Transacao {
+  id        Int           @id @default(autoincrement())
+  usuarioId Int
+  descricao String
+  valor     Decimal       @db.Decimal(10, 2)
+  tipo      TipoTransacao
+  data      DateTime      @default(now())
+  usuario   User          @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+
+  @@map("transacoes")
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum TipoTransporte {
+  onibus
+  van
+  barco
+}
+
+enum TipoDia {
+  util
+  sabado
+  domingo_feriado
+}
+
+enum CartaoTipo {
+  COMUM
+  ESTUDANTE
+  IDOSO
+}
+
+enum TipoNotificacao {
+  alerta
+  info
+  sucesso
+}
+
+enum TipoTransacao {
+  onibus
+  van
+  barco
+  recarga
+}

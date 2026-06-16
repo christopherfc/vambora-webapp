@@ -1,26 +1,30 @@
-import Linha from "../models/Linha.js";
+import prisma from "../config/prisma.js";
+import { agruparHorarios, serializarLinha } from "../utils/serializers.js";
 
 export const listarLinhas = async (req, res) => {
   try {
     const { tipo, busca } = req.query;
-    const filtro = {};
+    const filtro = { ativo: true };
 
     if (tipo) {
       filtro.tipoTransporte = tipo;
     }
 
     if (busca) {
-      const regex = new RegExp(busca, "i");
-      filtro.$or = [
-        { nome: regex },
-        { origem: regex },
-        { destino: regex },
+      filtro.OR = [
+        { nome: { contains: busca } },
+        { origem: { contains: busca } },
+        { destino: { contains: busca } },
       ];
     }
 
-    const linhas = await Linha.find(filtro).select("-horarios").sort({ numero: 1 });
+    const linhas = await prisma.linha.findMany({
+      where: filtro,
+      include: { pontos: true },
+      orderBy: { numero: "asc" },
+    });
 
-    res.json({ total: linhas.length, linhas });
+    res.json({ total: linhas.length, linhas: linhas.map((linha) => serializarLinha(linha)) });
   } catch (error) {
     res.status(500).json({ mensagem: "Erro ao buscar linhas" });
   }
@@ -28,11 +32,16 @@ export const listarLinhas = async (req, res) => {
 
 export const obterLinha = async (req, res) => {
   try {
-    const linha = await Linha.findById(req.params.id);
+    const linha = await prisma.linha.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { pontos: true, horarios: true },
+    });
+
     if (!linha) {
-      return res.status(404).json({ mensagem: "Linha não encontrada" });
+      return res.status(404).json({ mensagem: "Linha nao encontrada" });
     }
-    res.json({ linha });
+
+    res.json({ linha: serializarLinha(linha, true) });
   } catch (error) {
     res.status(500).json({ mensagem: "Erro ao buscar linha" });
   }
@@ -40,47 +49,40 @@ export const obterLinha = async (req, res) => {
 
 export const obterHorarios = async (req, res) => {
   try {
-    const linha = await Linha.findById(req.params.id);
+    const linha = await prisma.linha.findUnique({
+      where: { id: Number(req.params.id) },
+      include: { pontos: true, horarios: true },
+    });
+
     if (!linha) {
-      return res.status(404).json({ mensagem: "Linha não encontrada" });
+      return res.status(404).json({ mensagem: "Linha nao encontrada" });
     }
 
     res.json({
-      linha: {
-        _id: linha._id,
-        numero: linha.numero,
-        nome: linha.nome,
-        tipoTransporte: linha.tipoTransporte,
-        tarifa: linha.tarifa,
-        infoPagamento: linha.infoPagamento,
-        origem: linha.origem,
-        destino: linha.destino,
-        ativo: linha.ativo,
-        rota: linha.rota,
-      },
-      horarios: {
-        util: linha.horarios.util,
-        sabado: linha.horarios.sabado,
-        domingo_feriado: linha.horarios.domingo_feriado,
-      },
+      linha: serializarLinha(linha),
+      horarios: agruparHorarios(linha.horarios),
     });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao buscar horários" });
+    res.status(500).json({ mensagem: "Erro ao buscar horarios" });
   }
 };
 
 export const estatisticas = async (req, res) => {
   try {
-    const totalLinhas = await Linha.countDocuments();
-    const tipos = await Linha.distinct("tipoTransporte");
-    const menorTarifa = await Linha.findOne().sort({ tarifa: 1 }).select("tarifa");
+    const totalLinhas = await prisma.linha.count({ where: { ativo: true } });
+    const tipos = await prisma.linha.groupBy({ by: ["tipoTransporte"], where: { ativo: true } });
+    const menorTarifa = await prisma.linha.findFirst({
+      where: { ativo: true },
+      orderBy: { tarifa: "asc" },
+      select: { tarifa: true },
+    });
 
     res.json({
       totalLinhas,
       tiposModal: tipos.length,
-      tarifaMinima: menorTarifa ? menorTarifa.tarifa : 0,
+      tarifaMinima: menorTarifa ? Number(menorTarifa.tarifa) : 0,
     });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao buscar estatísticas" });
+    res.status(500).json({ mensagem: "Erro ao buscar estatisticas" });
   }
 };

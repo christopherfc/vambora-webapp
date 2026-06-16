@@ -1,13 +1,14 @@
 import bcrypt from "bcrypt";
-import Usuario from "../models/Usuario.js";
+import prisma from "../config/prisma.js";
+import { serializarUsuario, toCartaoTipo } from "../utils/serializers.js";
 
 export const obterPerfil = async (req, res) => {
   try {
-    const usuario = await Usuario.findById(req.usuario).select("-senha");
+    const usuario = await prisma.user.findUnique({ where: { id: req.usuario } });
     if (!usuario) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
+      return res.status(404).json({ mensagem: "Usuario nao encontrado" });
     }
-    res.json({ usuario });
+    res.json({ usuario: serializarUsuario(usuario) });
   } catch (error) {
     res.status(500).json({ mensagem: "Erro ao buscar perfil" });
   }
@@ -19,18 +20,14 @@ export const atualizarPerfil = async (req, res) => {
     const dados = {};
 
     if (nome) dados.nome = nome;
-    if (email) dados.email = email;
+    if (email) dados.email = email.toLowerCase();
     if (telefone !== undefined) dados.telefone = telefone;
 
-    const usuario = await Usuario.findByIdAndUpdate(req.usuario, dados, { new: true }).select("-senha");
-    if (!usuario) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
-    }
-
-    res.json({ usuario });
+    const usuario = await prisma.user.update({ where: { id: req.usuario }, data: dados });
+    res.json({ usuario: serializarUsuario(usuario) });
   } catch (error) {
-    if (error.code === 11000) {
-      return res.status(400).json({ mensagem: "Email já está em uso" });
+    if (error.code === "P2002") {
+      return res.status(400).json({ mensagem: "Email ja esta em uso" });
     }
     res.status(500).json({ mensagem: "Erro ao atualizar perfil" });
   }
@@ -41,16 +38,16 @@ export const alterarSenha = async (req, res) => {
     const { senhaAtual, novaSenha } = req.body;
 
     if (!senhaAtual || !novaSenha) {
-      return res.status(400).json({ mensagem: "Senha atual e nova senha são obrigatórias" });
+      return res.status(400).json({ mensagem: "Senha atual e nova senha sao obrigatorias" });
     }
 
     if (novaSenha.length < 6) {
       return res.status(400).json({ mensagem: "A nova senha deve ter pelo menos 6 caracteres" });
     }
 
-    const usuario = await Usuario.findById(req.usuario);
+    const usuario = await prisma.user.findUnique({ where: { id: req.usuario } });
     if (!usuario) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
+      return res.status(404).json({ mensagem: "Usuario nao encontrado" });
     }
 
     const senhaValida = await bcrypt.compare(senhaAtual, usuario.senha);
@@ -58,8 +55,10 @@ export const alterarSenha = async (req, res) => {
       return res.status(401).json({ mensagem: "Senha atual incorreta" });
     }
 
-    usuario.senha = await bcrypt.hash(novaSenha, 10);
-    await usuario.save();
+    await prisma.user.update({
+      where: { id: req.usuario },
+      data: { senha: await bcrypt.hash(novaSenha, 10) },
+    });
 
     res.json({ mensagem: "Senha alterada com sucesso" });
   } catch (error) {
@@ -70,46 +69,36 @@ export const alterarSenha = async (req, res) => {
 export const atualizarEndereco = async (req, res) => {
   try {
     const { cep, rua, numero, complemento, bairro, cidade, estado } = req.body;
+    const data = {};
 
-    const usuario = await Usuario.findById(req.usuario);
-    if (!usuario) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
-    }
+    if (cep !== undefined) data.cep = cep;
+    if (rua !== undefined) data.rua = rua;
+    if (numero !== undefined) data.numeroEndereco = numero;
+    if (complemento !== undefined) data.complemento = complemento;
+    if (bairro !== undefined) data.bairro = bairro;
+    if (cidade !== undefined) data.cidade = cidade;
+    if (estado !== undefined) data.estado = estado;
 
-    if (cep !== undefined) usuario.endereco.cep = cep;
-    if (rua !== undefined) usuario.endereco.rua = rua;
-    if (numero !== undefined) usuario.endereco.numero = numero;
-    if (complemento !== undefined) usuario.endereco.complemento = complemento;
-    if (bairro !== undefined) usuario.endereco.bairro = bairro;
-    if (cidade !== undefined) usuario.endereco.cidade = cidade;
-    if (estado !== undefined) usuario.endereco.estado = estado;
-
-    await usuario.save();
-
-    res.json({ endereco: usuario.endereco });
+    const usuario = await prisma.user.update({ where: { id: req.usuario }, data });
+    res.json({ endereco: serializarUsuario(usuario).endereco });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao atualizar endereço" });
+    res.status(500).json({ mensagem: "Erro ao atualizar endereco" });
   }
 };
 
 export const atualizarPreferencias = async (req, res) => {
   try {
     const { notificacoesHorarios, alertasTarifa, newsletter } = req.body;
+    const data = {};
 
-    const usuario = await Usuario.findById(req.usuario);
-    if (!usuario) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
-    }
+    if (notificacoesHorarios !== undefined) data.notificacoesHorarios = Boolean(notificacoesHorarios);
+    if (alertasTarifa !== undefined) data.alertasTarifa = Boolean(alertasTarifa);
+    if (newsletter !== undefined) data.newsletter = Boolean(newsletter);
 
-    if (notificacoesHorarios !== undefined) usuario.preferencias.notificacoesHorarios = notificacoesHorarios;
-    if (alertasTarifa !== undefined) usuario.preferencias.alertasTarifa = alertasTarifa;
-    if (newsletter !== undefined) usuario.preferencias.newsletter = newsletter;
-
-    await usuario.save();
-
-    res.json({ preferencias: usuario.preferencias });
+    const usuario = await prisma.user.update({ where: { id: req.usuario }, data });
+    res.json({ preferencias: serializarUsuario(usuario).preferencias });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao atualizar preferências" });
+    res.status(500).json({ mensagem: "Erro ao atualizar preferencias" });
   }
 };
 
@@ -118,19 +107,16 @@ export const alterarTipoCartao = async (req, res) => {
     const { tipo } = req.body;
 
     if (!tipo || !["Comum", "Estudante", "Idoso"].includes(tipo)) {
-      return res.status(400).json({ mensagem: "Tipo de cartão inválido. Use: Comum, Estudante ou Idoso" });
+      return res.status(400).json({ mensagem: "Tipo de cartao invalido. Use: Comum, Estudante ou Idoso" });
     }
 
-    const usuario = await Usuario.findById(req.usuario);
-    if (!usuario) {
-      return res.status(404).json({ mensagem: "Usuário não encontrado" });
-    }
+    const usuario = await prisma.user.update({
+      where: { id: req.usuario },
+      data: { cartaoTipo: toCartaoTipo(tipo) },
+    });
 
-    usuario.cartao.tipo = tipo;
-    await usuario.save();
-
-    res.json({ cartao: usuario.cartao });
+    res.json({ cartao: serializarUsuario(usuario).cartao });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao alterar tipo do cartão" });
+    res.status(500).json({ mensagem: "Erro ao alterar tipo do cartao" });
   }
 };

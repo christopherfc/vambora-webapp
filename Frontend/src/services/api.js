@@ -4,6 +4,10 @@ function getToken() {
   return localStorage.getItem("vambora_token");
 }
 
+function setUsuario(usuario) {
+  localStorage.setItem("vambora_usuario", JSON.stringify(usuario));
+}
+
 function headers(auth = false) {
   const h = { "Content-Type": "application/json" };
   if (auth) {
@@ -24,6 +28,7 @@ export async function login(email, senha) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.mensagem || "Erro ao fazer login");
   localStorage.setItem("vambora_token", data.token);
+  setUsuario(data.usuario);
   return data;
 }
 
@@ -36,15 +41,35 @@ export async function registrar(nome, email, senha, telefone) {
   const data = await res.json();
   if (!res.ok) throw new Error(data.mensagem || "Erro ao registrar");
   localStorage.setItem("vambora_token", data.token);
+  setUsuario(data.usuario);
   return data;
 }
 
 export function logout() {
   localStorage.removeItem("vambora_token");
+  localStorage.removeItem("vambora_usuario");
 }
 
 export function estaLogado() {
   return !!getToken();
+}
+
+export function usuarioAtual() {
+  try {
+    return JSON.parse(localStorage.getItem("vambora_usuario") || "null");
+  } catch {
+    return null;
+  }
+}
+
+async function requestAdmin(path, options = {}) {
+  const res = await fetch(`${API_URL}/admin${path}`, {
+    ...options,
+    headers: { ...headers(true), ...(options.headers || {}) },
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro no painel admin");
+  return data;
 }
 
 // ── Linhas (mesmas assinaturas que antes) ──────────────────────────────────────
@@ -166,3 +191,24 @@ export async function buscarFaqs() {
   const res = await fetch(`${API_URL}/faq`);
   return res.json();
 }
+
+// Admin
+export const adminResumo = () => requestAdmin("/resumo");
+export const adminListarLinhas = () => requestAdmin("/linhas");
+export const adminCriarLinha = (linha) => requestAdmin("/linhas", { method: "POST", body: JSON.stringify(linha) });
+export const adminAtualizarLinha = (id, linha) => requestAdmin(`/linhas/${id}`, { method: "PUT", body: JSON.stringify(linha) });
+export const adminRemoverLinha = (id) => requestAdmin(`/linhas/${id}`, { method: "DELETE" });
+export const adminListarFaqs = () => requestAdmin("/faqs");
+export const adminSalvarFaq = (faq) => {
+  const id = faq.id || faq._id;
+  return requestAdmin(id ? `/faqs/${id}` : "/faqs", { method: id ? "PUT" : "POST", body: JSON.stringify(faq) });
+};
+export const adminRemoverFaq = (id) => requestAdmin(`/faqs/${id}`, { method: "DELETE" });
+export const adminListarNotificacoes = () => requestAdmin("/notificacoes");
+export const adminSalvarNotificacao = (notificacao) => {
+  const id = notificacao.id || notificacao._id;
+  return requestAdmin(id ? `/notificacoes/${id}` : "/notificacoes", { method: id ? "PUT" : "POST", body: JSON.stringify(notificacao) });
+};
+export const adminRemoverNotificacao = (id) => requestAdmin(`/notificacoes/${id}`, { method: "DELETE" });
+export const adminListarUsuarios = () => requestAdmin("/usuarios");
+export const adminAtualizarUsuario = (id, usuario) => requestAdmin(`/usuarios/${id}`, { method: "PUT", body: JSON.stringify(usuario) });

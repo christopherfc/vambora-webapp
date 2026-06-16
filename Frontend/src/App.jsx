@@ -8,7 +8,8 @@ import Mapa from "./pages/Mapa.jsx";
 import Saldo from "./pages/Saldo.jsx";
 import Notificacoes from "./pages/Notificacoes.jsx";
 import Perfil from "./pages/Perfil.jsx";
-import { estaLogado, logout, contarNotificacoesNaoLidas } from "./services/api.js";
+import AdminPanel from "./pages/AdminPanel.jsx";
+import { estaLogado, logout, contarNotificacoesNaoLidas, usuarioAtual } from "./services/api.js";
 
 export default function App() {
   const [logado,           setLogado]           = useState(estaLogado());
@@ -16,6 +17,7 @@ export default function App() {
   const [abaAtiva,         setAbaAtiva]         = useState("rotas");
   const [linhaSelecionada, setLinhaSelecionada] = useState(null);
   const [notiCount,        setNotiCount]        = useState(0);
+  const [usuario,          setUsuario]          = useState(usuarioAtual());
 
   /* ── Conta notificações não-lidas ── */
   const atualizarNotiCount = useCallback(async () => {
@@ -36,11 +38,13 @@ export default function App() {
 
   function handleLoadingDone() {
     setCarregando(false);
+    setUsuario(usuarioAtual());
     setLogado(true);
   }
 
   function handleSair() {
     logout();
+    setUsuario(null);
     setLogado(false);
     setAbaAtiva("rotas");
     setLinhaSelecionada(null);
@@ -77,8 +81,9 @@ export default function App() {
       {abaAtiva === "saldo"        && <Saldo />}
       {abaAtiva === "notificacoes" && <Notificacoes onAtualizar={atualizarNotiCount} />}
       {abaAtiva === "perfil"       && <Perfil onSair={handleSair} />}
+      {abaAtiva === "admin"        && usuario?.role === "ADMIN" && <AdminPanel />}
 
-      <BottomNav abaAtiva={abaAtiva} onMudar={mudarAba} notificacoes={notiCount} />
+      <BottomNav abaAtiva={abaAtiva} onMudar={mudarAba} notificacoes={notiCount} admin={usuario?.role === "ADMIN"} />
     </>
   );
 }
