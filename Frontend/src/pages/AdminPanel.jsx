@@ -603,7 +603,7 @@ export default function AdminPanel() {
                 <label style={s.field}><span style={s.label}>Telefone</span><input style={s.input} value={usuarioEditando.telefone || ""} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, telefone: e.target.value })} /></label>
                 <div style={s.row}>
                   <label style={s.field}><span style={s.label}>Role</span><select style={s.input} value={usuarioEditando.role} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, role: e.target.value })}><option value="USER">USER</option><option value="MOTORISTA">MOTORISTA</option><option value="COBRADOR">COBRADOR</option><option value="ADMIN">ADMIN</option></select></label>
-                  <label style={s.field}><span style={s.label}>Saldo</span><input style={s.input} type="number" step="0.01" value={usuarioEditando.cartao?.saldo ?? usuarioEditando.saldo ?? 0} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, saldo: e.target.value })} /></label>
+                  <label style={s.field}><span style={s.label}>Saldo</span><input style={s.input} type="number" step="0.01" value={usuarioEditando.saldo ?? 0} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, saldo: e.target.value })} /></label>
                 </div>
                 {usuarioEditando.role === "MOTORISTA" && (
                   <div style={s.field}>
