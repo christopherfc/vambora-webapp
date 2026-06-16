@@ -231,6 +231,15 @@ export default function Mapa({ onVerHorarios }) {
             );
           })}
 
+          {linhasFiltradas.flatMap(linha => (linha.paradas || []).map((parada, index) => (
+            <Marker key={`parada-${linha._id}-${index}`} position={[parada.latitude, parada.longitude]}>
+              <Popup>
+                <strong>{parada.nome}</strong><br />
+                Linha {linha.numero} - {linha.nome}
+              </Popup>
+            </Marker>
+          )))}
+
           {veiculosFiltrados.map((veiculo) => (
             <Marker
               key={`veiculo-${veiculo.id}`}

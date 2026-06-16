@@ -65,6 +65,16 @@ export function serializarLinha(linha, incluirHorarios = false) {
     rota: (linha.pontos || [])
       .sort((a, b) => a.ordem - b.ordem)
       .map((p) => [Number(p.latitude), Number(p.longitude)]),
+    paradas: (linha.paradas || [])
+      .sort((a, b) => a.ordem - b.ordem)
+      .map((p) => ({
+        _id: String(p.id),
+        id: p.id,
+        nome: p.nome,
+        latitude: Number(p.latitude),
+        longitude: Number(p.longitude),
+        ordem: p.ordem,
+      })),
     createdAt: linha.createdAt,
     updatedAt: linha.updatedAt,
   };

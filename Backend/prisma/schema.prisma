@@ -49,6 +49,7 @@ model Linha {
   destino         String
   ativo           Boolean      @default(true)
   pontos          RotaPonto[]
+  paradas         LinhaParada[]
   horarios        Horario[]
   motoristas      MotoristaLinha[]
   veiculosAtivos  VeiculoLocalizacao[]
@@ -80,6 +81,19 @@ model Horario {
 
   @@index([linhaId, tipoDia])
   @@map("horarios")
+}
+
+model LinhaParada {
+  id        Int      @id @default(autoincrement())
+  linhaId   Int
+  ordem     Int
+  nome      String
+  latitude  Decimal  @db.Decimal(10, 7)
+  longitude Decimal  @db.Decimal(10, 7)
+  linha     Linha    @relation(fields: [linhaId], references: [id], onDelete: Cascade)
+
+  @@unique([linhaId, ordem])
+  @@map("linha_paradas")
 }
 
 model Faq {

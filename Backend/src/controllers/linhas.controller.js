@@ -20,7 +20,7 @@ export const listarLinhas = async (req, res) => {
 
     const linhas = await prisma.linha.findMany({
       where: filtro,
-      include: { pontos: true },
+      include: { pontos: true, paradas: true },
       orderBy: { numero: "asc" },
     });
 
@@ -34,7 +34,7 @@ export const obterLinha = async (req, res) => {
   try {
     const linha = await prisma.linha.findUnique({
       where: { id: Number(req.params.id) },
-      include: { pontos: true, horarios: true },
+      include: { pontos: true, paradas: true, horarios: true },
     });
 
     if (!linha) {
@@ -51,7 +51,7 @@ export const obterHorarios = async (req, res) => {
   try {
     const linha = await prisma.linha.findUnique({
       where: { id: Number(req.params.id) },
-      include: { pontos: true, horarios: true },
+      include: { pontos: true, paradas: true, horarios: true },
     });
 
     if (!linha) {
@@ -94,7 +94,7 @@ export const veiculosAtivos = async (req, res) => {
       where: { ativo: true, atualizadoEm: { gte: desde } },
       include: {
         usuario: true,
-        linha: { include: { pontos: true } },
+        linha: { include: { pontos: true, paradas: true } },
       },
       orderBy: { atualizadoEm: "desc" },
     });

@@ -28,6 +28,7 @@ const emptyLinha = {
   destino: "",
   ativo: true,
   rotaTexto: "",
+  paradas: [],
   util: "",
   sabado: "",
   domingo_feriado: "",
@@ -72,6 +73,13 @@ const s = {
   timeChip: { display: "inline-flex", alignItems: "center", gap: 6, border: "1px solid var(--cor-borda)", borderRadius: 999, padding: "6px 8px 6px 10px", background: "#fff", fontSize: 13, fontWeight: 900, color: "var(--cor-texto)" },
   chipRemove: { border: "none", borderRadius: 999, width: 20, height: 20, background: "var(--cor-borda-suave)", color: "var(--cor-vinho)", cursor: "pointer", fontWeight: 900 },
   miniGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(90px, 1fr))", gap: 8, alignItems: "end", marginTop: 8 },
+  modalOverlay: { position: "fixed", inset: 0, zIndex: 20000, background: "rgba(45,21,21,.62)", display: "flex", alignItems: "stretch", justifyContent: "center", padding: 12 },
+  modal: { background: "#fff", width: "min(1120px, 100%)", borderRadius: 10, overflow: "hidden", display: "flex", flexDirection: "column", boxShadow: "0 12px 40px rgba(0,0,0,.35)" },
+  modalHeader: { padding: "12px 14px", borderBottom: "1px solid var(--cor-borda)", display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  modalBody: { flex: 1, minHeight: 0, display: "grid", gridTemplateColumns: "1fr 280px" },
+  modalMap: { minHeight: 520, height: "calc(100vh - 132px)" },
+  modalSide: { borderLeft: "1px solid var(--cor-borda)", padding: 12, overflowY: "auto" },
+  counter: { fontSize: 12, fontWeight: 900, color: "var(--cor-texto-suave)", marginBottom: 8 },
 };
 
 function parseLista(texto) {
@@ -110,11 +118,16 @@ function parseRota(texto) {
     .filter((p) => p.length >= 2 && Number.isFinite(p[0]) && Number.isFinite(p[1]));
 }
 
+function paradaLabel(parada, index) {
+  return parada.nome?.trim() || `Parada ${index + 1}`;
+}
+
 function linhaToForm(linha) {
   return {
     ...emptyLinha,
     ...linha,
     rotaTexto: (linha.rota || []).map((p) => `${p[0]}, ${p[1]}`).join("\n"),
+    paradas: linha.paradas || [],
     util: (linha.horarios?.util || []).join(", "),
     sabado: (linha.horarios?.sabado || []).join(", "),
     domingo_feriado: (linha.horarios?.domingo_feriado || []).join(", "),
@@ -132,6 +145,7 @@ function linhaPayload(form) {
     destino: form.destino,
     ativo: Boolean(form.ativo),
     rota: parseRota(form.rotaTexto),
+    paradas: form.paradas || [],
     horarios: {
       util: parseLista(form.util),
       sabado: parseLista(form.sabado),
@@ -149,42 +163,127 @@ function ClickHandler({ onAdd }) {
   return null;
 }
 
-function RouteEditorMap({ pontos, onChange }) {
-  const center = pontos[0] || [-10.2900, -36.5840];
+function RouteMapModal({ aberto, form, onChange, onClose }) {
+  const [modo, setModo] = useState("rota");
+  if (!aberto) return null;
 
-  function addPoint(ponto) {
-    onChange([...pontos, ponto]);
+  const pontos = parseRota(form.rotaTexto);
+  const paradas = form.paradas || [];
+  const center = pontos[0] || (paradas[0] ? [paradas[0].latitude, paradas[0].longitude] : [-10.2900, -36.5840]);
+
+  function setPontos(novosPontos) {
+    onChange({ ...form, rotaTexto: novosPontos.map((p) => `${p[0]}, ${p[1]}`).join("\n") });
   }
 
-  function removePoint(index) {
-    onChange(pontos.filter((_, i) => i !== index));
+  function setParadas(novasParadas) {
+    onChange({ ...form, paradas: novasParadas.map((p, index) => ({ ...p, ordem: index })) });
+  }
+
+  function addPoint(ponto) {
+    if (modo === "rota") {
+      setPontos([...pontos, ponto]);
+      return;
+    }
+    const nome = window.prompt("Nome da parada", `Parada ${paradas.length + 1}`);
+    if (nome === null) return;
+    setParadas([...paradas, { nome: nome.trim() || `Parada ${paradas.length + 1}`, latitude: ponto[0], longitude: ponto[1] }]);
+  }
+
+  function undo() {
+    if (modo === "rota") setPontos(pontos.slice(0, -1));
+    else setParadas(paradas.slice(0, -1));
+  }
+
+  function clear() {
+    if (modo === "rota") setPontos([]);
+    else setParadas([]);
+  }
+
+  function removeParada(index) {
+    setParadas(paradas.filter((_, i) => i !== index));
+  }
+
+  function renameParada(index) {
+    const atual = paradas[index];
+    const nome = window.prompt("Nome da parada", paradaLabel(atual, index));
+    if (nome === null) return;
+    setParadas(paradas.map((p, i) => i === index ? { ...p, nome: nome.trim() || paradaLabel(p, index) } : p));
   }
 
   return (
-    <>
-      <div style={s.hint}>Clique no mapa para montar a rota na ordem do trajeto. Clique em um ponto para remover.</div>
-      <div style={s.mapBox}>
-        <MapContainer center={center} zoom={14} style={{ height: "100%", width: "100%" }} zoomControl={false}>
-          <TileLayer
-            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-          />
-          <ClickHandler onAdd={addPoint} />
-          {pontos.length > 1 && <Polyline positions={pontos} pathOptions={{ color: "#FE8A00", weight: 5, opacity: 0.9 }} />}
-          {pontos.map((ponto, index) => (
-            <CircleMarker
-              key={`${ponto[0]}-${ponto[1]}-${index}`}
-              center={ponto}
-              radius={8}
-              pathOptions={{ color: "#612828", fillColor: "#FE8A00", fillOpacity: 1, weight: 2 }}
-              eventHandlers={{ click: () => removePoint(index) }}
-            >
-              <Tooltip permanent direction="top" offset={[0, -8]}>{index + 1}</Tooltip>
-            </CircleMarker>
-          ))}
-        </MapContainer>
+    <div style={s.modalOverlay}>
+      <div style={s.modal}>
+        <div style={s.modalHeader}>
+          <div>
+            <div style={s.panelTitle}>Editor de mapa</div>
+            <div style={s.itemSub}>{modo === "rota" ? "Clique para desenhar o trajeto da linha." : "Clique para adicionar pontos de parada."}</div>
+          </div>
+          <div style={s.actions}>
+            <button type="button" style={s.smallTab(modo === "rota")} onClick={() => setModo("rota")}>Rota</button>
+            <button type="button" style={s.smallTab(modo === "paradas")} onClick={() => setModo("paradas")}>Paradas</button>
+            <button type="button" style={s.btn("ghost")} onClick={onClose}>Fechar</button>
+          </div>
+        </div>
+        <div style={s.modalBody}>
+          <div style={s.modalMap}>
+            <MapContainer center={center} zoom={14} style={{ height: "100%", width: "100%" }}>
+              <TileLayer
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
+                url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+              />
+              <ClickHandler onAdd={addPoint} />
+              {pontos.length > 1 && <Polyline positions={pontos} pathOptions={{ color: "#FE8A00", weight: 5, opacity: 0.9 }} />}
+              {pontos.map((ponto, index) => (
+                <CircleMarker
+                  key={`rota-${ponto[0]}-${ponto[1]}-${index}`}
+                  center={ponto}
+                  radius={7}
+                  pathOptions={{ color: "#612828", fillColor: "#FE8A00", fillOpacity: 1, weight: 2 }}
+                  eventHandlers={{ click: () => modo === "rota" && setPontos(pontos.filter((_, i) => i !== index)) }}
+                >
+                  <Tooltip permanent direction="top" offset={[0, -8]}>{index + 1}</Tooltip>
+                </CircleMarker>
+              ))}
+              {paradas.map((parada, index) => (
+                <CircleMarker
+                  key={`parada-${parada.latitude}-${parada.longitude}-${index}`}
+                  center={[parada.latitude, parada.longitude]}
+                  radius={9}
+                  pathOptions={{ color: "#2471A3", fillColor: "#fff", fillOpacity: 1, weight: 3 }}
+                  eventHandlers={{ click: () => modo === "paradas" && renameParada(index) }}
+                >
+                  <Tooltip permanent direction="right" offset={[8, 0]}>{paradaLabel(parada, index)}</Tooltip>
+                </CircleMarker>
+              ))}
+            </MapContainer>
+          </div>
+          <div style={s.modalSide}>
+            <div style={s.counter}>{pontos.length} pontos de rota</div>
+            <div style={s.counter}>{paradas.length} paradas</div>
+            <div style={s.actions}>
+              <button type="button" style={s.btn("ghost")} onClick={undo}>Desfazer</button>
+              <button type="button" style={s.btn("danger")} onClick={clear}>Limpar {modo === "rota" ? "rota" : "paradas"}</button>
+            </div>
+            <div style={{ marginTop: 14 }}>
+              <div style={s.label}>Paradas cadastradas</div>
+              <div style={s.list}>
+                {paradas.length === 0 && <div style={s.itemSub}>Nenhuma parada adicionada.</div>}
+                {paradas.map((parada, index) => (
+                  <div key={`${parada.latitude}-${parada.longitude}-${index}`} style={s.item(false)}>
+                    <div style={s.itemTitle}>{index + 1}. {paradaLabel(parada, index)}</div>
+                    <div style={s.itemSub}>{Number(parada.latitude).toFixed(6)}, {Number(parada.longitude).toFixed(6)}</div>
+                    <div style={{ ...s.actions, marginTop: 8 }}>
+                      <button type="button" style={s.btn("ghost")} onClick={() => renameParada(index)}>Renomear</button>
+                      <button type="button" style={s.btn("danger")} onClick={() => removeParada(index)}>Remover</button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-    </>
+    </div>
   );
 }
 
@@ -303,6 +402,7 @@ export default function AdminPanel() {
   const [faqForm, setFaqForm] = useState(emptyFaq);
   const [notiForm, setNotiForm] = useState(emptyNotificacao);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
+  const [mapaAberto, setMapaAberto] = useState(false);
   const [msg, setMsg] = useState("");
 
   const selecionadaId = linhaForm.id || linhaForm._id;
@@ -341,22 +441,6 @@ export default function AdminPanel() {
     await carregar();
     setLinhaForm(emptyLinha);
     avisar("Linha salva.");
-  }
-
-  function atualizarRotaVisual(pontos) {
-    setLinhaForm({
-      ...linhaForm,
-      rotaTexto: pontos.map((p) => `${p[0]}, ${p[1]}`).join("\n"),
-    });
-  }
-
-  function desfazerPonto() {
-    const pontos = parseRota(linhaForm.rotaTexto);
-    atualizarRotaVisual(pontos.slice(0, -1));
-  }
-
-  function limparRota() {
-    atualizarRotaVisual([]);
   }
 
   async function removerLinha() {
@@ -448,10 +532,10 @@ export default function AdminPanel() {
                 <label style={s.field}><span style={s.label}>Ativa</span><select style={s.input} value={linhaForm.ativo ? "1" : "0"} onChange={(e) => setLinhaForm({ ...linhaForm, ativo: e.target.value === "1" })}><option value="1">Sim</option><option value="0">Nao</option></select></label>
               </div>
               <label style={s.field}><span style={s.label}>Pagamento</span><input style={s.input} value={linhaForm.infoPagamento} onChange={(e) => setLinhaForm({ ...linhaForm, infoPagamento: e.target.value })} /></label>
-              <RouteEditorMap pontos={parseRota(linhaForm.rotaTexto)} onChange={atualizarRotaVisual} />
-              <div style={{ ...s.actions, marginBottom: 10 }}>
-                <button type="button" style={s.btn("ghost")} onClick={desfazerPonto}>Desfazer ponto</button>
-                <button type="button" style={s.btn("ghost")} onClick={limparRota}>Limpar rota</button>
+              <div style={s.scheduleBox}>
+                <div style={s.panelTitle}>Mapa da linha</div>
+                <div style={s.itemSub}>{parseRota(linhaForm.rotaTexto).length} pontos de rota | {(linhaForm.paradas || []).length} paradas</div>
+                <button type="button" style={s.btn("ghost")} onClick={() => setMapaAberto(true)}>Editar rota e paradas no mapa</button>
               </div>
               <label style={s.field}><span style={s.label}>Pontos da rota, um por linha: latitude, longitude</span><textarea rows={5} style={s.input} value={linhaForm.rotaTexto} onChange={(e) => setLinhaForm({ ...linhaForm, rotaTexto: e.target.value })} /></label>
               <ScheduleEditor form={linhaForm} onChange={setLinhaForm} onNotice={avisar} />
@@ -467,6 +551,8 @@ export default function AdminPanel() {
             </div>
           </div>
         )}
+
+        <RouteMapModal aberto={mapaAberto} form={linhaForm} onChange={setLinhaForm} onClose={() => setMapaAberto(false)} />
 
         {aba === "faqs" && (
           <div style={s.grid}>

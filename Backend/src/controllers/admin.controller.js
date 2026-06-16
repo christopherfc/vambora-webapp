@@ -28,6 +28,17 @@ function montarHorarios(horarios = {}) {
   );
 }
 
+function montarParadas(paradas = []) {
+  return paradas
+    .filter((p) => p && Number.isFinite(Number(p.latitude)) && Number.isFinite(Number(p.longitude)))
+    .map((p, index) => ({
+      ordem: index,
+      nome: p.nome?.trim() || `Parada ${index + 1}`,
+      latitude: Number(p.latitude),
+      longitude: Number(p.longitude),
+    }));
+}
+
 function dadosLinha(body) {
   return {
     numero: Number(body.numero),
@@ -59,7 +70,7 @@ export const resumo = async (req, res) => {
 export const listarLinhasAdmin = async (req, res) => {
   try {
     const linhas = await prisma.linha.findMany({
-      include: { pontos: true, horarios: true },
+      include: { pontos: true, paradas: true, horarios: true },
       orderBy: { numero: "asc" },
     });
     res.json({ linhas: linhas.map((linha) => serializarLinha(linha, true)) });
@@ -71,15 +82,17 @@ export const listarLinhasAdmin = async (req, res) => {
 export const criarLinhaAdmin = async (req, res) => {
   try {
     const pontos = montarPontos(req.body.rota);
+    const paradas = montarParadas(req.body.paradas);
     const horarios = montarHorarios(req.body.horarios);
 
     const linha = await prisma.linha.create({
       data: {
         ...dadosLinha(req.body),
         pontos: { create: pontos },
+        paradas: { create: paradas },
         horarios: { create: horarios },
       },
-      include: { pontos: true, horarios: true },
+      include: { pontos: true, paradas: true, horarios: true },
     });
 
     res.status(201).json({ linha: serializarLinha(linha, true) });
@@ -92,19 +105,24 @@ export const atualizarLinhaAdmin = async (req, res) => {
   try {
     const id = Number(req.params.id);
     const pontos = montarPontos(req.body.rota);
+    const paradas = montarParadas(req.body.paradas);
     const horarios = montarHorarios(req.body.horarios);
 
     const linha = await prisma.$transaction(async (tx) => {
       await tx.rotaPonto.deleteMany({ where: { linhaId: id } });
+      await tx.linhaParada.deleteMany({ where: { linhaId: id } });
       await tx.horario.deleteMany({ where: { linhaId: id } });
       await tx.linha.update({ where: { id }, data: dadosLinha(req.body) });
       if (pontos.length) {
         await tx.rotaPonto.createMany({ data: pontos.map((p) => ({ ...p, linhaId: id })) });
       }
+      if (paradas.length) {
+        await tx.linhaParada.createMany({ data: paradas.map((p) => ({ ...p, linhaId: id })) });
+      }
       if (horarios.length) {
         await tx.horario.createMany({ data: horarios.map((h) => ({ ...h, linhaId: id })) });
       }
-      return tx.linha.findUnique({ where: { id }, include: { pontos: true, horarios: true } });
+      return tx.linha.findUnique({ where: { id }, include: { pontos: true, paradas: true, horarios: true } });
     });
 
     res.json({ linha: serializarLinha(linha, true) });

@@ -21,7 +21,7 @@ export const minhasLinhas = async (req, res) => {
 
     const vinculos = await prisma.motoristaLinha.findMany({
       where: { usuarioId: req.usuario },
-      include: { linha: { include: { pontos: true, horarios: true } } },
+      include: { linha: { include: { pontos: true, paradas: true, horarios: true } } },
       orderBy: { linha: { numero: "asc" } },
     });
 
@@ -71,7 +71,7 @@ export const atualizarLocalizacao = async (req, res) => {
         ativo: true,
         atualizadoEm: new Date(),
       },
-      include: { usuario: true, linha: { include: { pontos: true } } },
+      include: { usuario: true, linha: { include: { pontos: true, paradas: true } } },
     });
 
     res.json({ veiculo: serializarVeiculoLocalizacao(localizacao) });
@@ -99,7 +99,7 @@ export const veiculosAtivos = async (req, res) => {
       where: { ativo: true, atualizadoEm: { gte: desde } },
       include: {
         usuario: true,
-        linha: { include: { pontos: true } },
+        linha: { include: { pontos: true, paradas: true } },
       },
       orderBy: { atualizadoEm: "desc" },
     });
