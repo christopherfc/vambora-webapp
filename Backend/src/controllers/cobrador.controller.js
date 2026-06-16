@@ -52,6 +52,18 @@ export const cobrarPassagem = async (req, res) => {
     const linha = await prisma.linha.findUnique({ where: { id: linhaId } });
     if (!linha) return res.status(404).json({ mensagem: "Linha nao encontrada" });
 
+    const desde = new Date(Date.now() - 45 * 1000);
+    const veiculoAtivo = await prisma.veiculoLocalizacao.findFirst({
+      where: {
+        linhaId,
+        ativo: true,
+        atualizadoEm: { gte: desde },
+      },
+    });
+    if (!veiculoAtivo) {
+      return res.status(400).json({ mensagem: "Nenhum motorista ativo nesta linha no momento" });
+    }
+
     const passageiro = await prisma.user.findUnique({ where: { cartaoNumero: codigo } });
     if (!passageiro) return res.status(404).json({ mensagem: "Cartao nao encontrado" });
 
