@@ -1,10 +1,12 @@
 import prisma from "../config/prisma.js";
 import {
+  fromCartaoTipo,
   agruparHorarios,
   serializarFaq,
   serializarLinha,
   serializarNotificacao,
   serializarUsuario,
+  toCartaoTipo,
 } from "../utils/serializers.js";
 
 const TIPOS_DIA = ["util", "sabado", "domingo_feriado"];
@@ -269,5 +271,69 @@ export const atualizarUsuarioAdmin = async (req, res) => {
     res.json({ usuario: serializarUsuario(usuario) });
   } catch (error) {
     res.status(400).json({ mensagem: "Erro ao atualizar usuario" });
+  }
+};
+
+export const listarRegrasCobrancaAdmin = async (req, res) => {
+  try {
+    const existentes = await prisma.regraCobranca.findMany({ orderBy: { tipoCartao: "asc" } });
+    const porTipo = new Map(existentes.map((regra) => [regra.tipoCartao, regra]));
+    const tipos = ["COMUM", "ESTUDANTE", "IDOSO"];
+
+    const regras = await Promise.all(tipos.map(async (tipoCartao) => {
+      if (porTipo.has(tipoCartao)) return porTipo.get(tipoCartao);
+      return prisma.regraCobranca.create({
+        data: {
+          tipoCartao,
+          descontoPercentual: tipoCartao === "ESTUDANTE" ? 50 : tipoCartao === "IDOSO" ? 100 : 0,
+          ativo: true,
+        },
+      });
+    }));
+
+    res.json({
+      regras: regras.map((regra) => ({
+        id: regra.id,
+        tipoCartao: fromCartaoTipo(regra.tipoCartao),
+        descontoPercentual: Number(regra.descontoPercentual),
+        ativo: regra.ativo,
+      })),
+    });
+  } catch (error) {
+    res.status(500).json({ mensagem: "Erro ao listar regras de cobranca" });
+  }
+};
+
+export const salvarRegraCobrancaAdmin = async (req, res) => {
+  try {
+    const tipoCartao = toCartaoTipo(req.body.tipoCartao);
+    if (!["COMUM", "ESTUDANTE", "IDOSO"].includes(tipoCartao)) {
+      return res.status(400).json({ mensagem: "Tipo de cartao invalido" });
+    }
+
+    const desconto = Math.max(0, Math.min(100, Number(req.body.descontoPercentual || 0)));
+    const regra = await prisma.regraCobranca.upsert({
+      where: { tipoCartao },
+      create: {
+        tipoCartao,
+        descontoPercentual: desconto,
+        ativo: req.body.ativo !== undefined ? Boolean(req.body.ativo) : true,
+      },
+      update: {
+        descontoPercentual: desconto,
+        ativo: req.body.ativo !== undefined ? Boolean(req.body.ativo) : true,
+      },
+    });
+
+    res.json({
+      regra: {
+        id: regra.id,
+        tipoCartao: fromCartaoTipo(regra.tipoCartao),
+        descontoPercentual: Number(regra.descontoPercentual),
+        ativo: regra.ativo,
+      },
+    });
+  } catch (error) {
+    res.status(400).json({ mensagem: "Erro ao salvar regra de cobranca" });
   }
 };

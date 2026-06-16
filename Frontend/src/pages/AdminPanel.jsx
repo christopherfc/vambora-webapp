@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Save, Trash2, RefreshCw, Route, HelpCircle, Bell, Users } from "lucide-react";
+import { Plus, Save, Trash2, RefreshCw, Route, HelpCircle, Bell, Users, Percent } from "lucide-react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
@@ -9,6 +9,7 @@ import {
   adminListarFaqs,
   adminListarLinhas,
   adminListarNotificacoes,
+  adminListarRegrasCobranca,
   adminListarUsuarios,
   adminRemoverFaq,
   adminRemoverLinha,
@@ -16,6 +17,7 @@ import {
   adminResumo,
   adminSalvarFaq,
   adminSalvarNotificacao,
+  adminSalvarRegraCobranca,
 } from "../services/api.js";
 
 const emptyLinha = {
@@ -398,6 +400,7 @@ export default function AdminPanel() {
   const [faqs, setFaqs] = useState([]);
   const [notificacoes, setNotificacoes] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
+  const [regrasCobranca, setRegrasCobranca] = useState([]);
   const [linhaForm, setLinhaForm] = useState(emptyLinha);
   const [faqForm, setFaqForm] = useState(emptyFaq);
   const [notiForm, setNotiForm] = useState(emptyNotificacao);
@@ -410,18 +413,20 @@ export default function AdminPanel() {
   const notiId = notiForm.id || notiForm._id;
 
   async function carregar() {
-    const [r, l, f, n, u] = await Promise.all([
+    const [r, l, f, n, u, regras] = await Promise.all([
       adminResumo(),
       adminListarLinhas(),
       adminListarFaqs(),
       adminListarNotificacoes(),
       adminListarUsuarios(),
+      adminListarRegrasCobranca(),
     ]);
     setResumo(r);
     setLinhas(l.linhas || []);
     setFaqs(f.faqs || []);
     setNotificacoes(n.notificacoes || []);
     setUsuarios(u.usuarios || []);
+    setRegrasCobranca(regras.regras || []);
   }
 
   useEffect(() => {
@@ -475,6 +480,12 @@ export default function AdminPanel() {
     avisar("Usuario atualizado.");
   }
 
+  async function salvarRegra(regra) {
+    await adminSalvarRegraCobranca(regra);
+    await carregar();
+    avisar("Regra de cobranca salva.");
+  }
+
   function toggleLinhaMotorista(linhaId) {
     const atuais = usuarioEditando?.motoristaLinhas || [];
     const existe = atuais.map(String).includes(String(linhaId));
@@ -502,6 +513,7 @@ export default function AdminPanel() {
     { id: "faqs", label: "FAQ", Icone: HelpCircle },
     { id: "notificacoes", label: "Avisos", Icone: Bell },
     { id: "usuarios", label: "Usuarios", Icone: Users },
+    { id: "cobranca", label: "Cobranca", Icone: Percent },
   ], []);
 
   return (
@@ -643,6 +655,53 @@ export default function AdminPanel() {
               </>}
             </form>
             <div style={s.panel}><div style={s.panelTitle}>Usuarios</div><div style={s.list}>{usuarios.map((u) => <div key={u.id} style={s.item(usuarioEditando?.id === u.id)} onClick={() => setUsuarioEditando({ ...u, saldo: u.cartao?.saldo || 0 })}><div style={s.itemTitle}>{u.nome}</div><div style={s.itemSub}>{u.email} | {u.role} | R${Number(u.cartao?.saldo || 0).toFixed(2)}</div></div>)}</div></div>
+          </div>
+        )}
+
+        {aba === "cobranca" && (
+          <div style={s.panel}>
+            <div style={s.panelTitle}>Regras de cobranca por categoria</div>
+            <div style={s.itemSub}>Defina o percentual de desconto aplicado na tarifa da linha durante a cobrança por QR Code.</div>
+            <div style={{ ...s.list, marginTop: 14 }}>
+              {regrasCobranca.map((regra) => (
+                <div key={regra.tipoCartao} style={s.item(false)}>
+                  <div style={s.itemTop}>
+                    <div>
+                      <div style={s.itemTitle}>{regra.tipoCartao}</div>
+                      <div style={s.itemSub}>Desconto atual: {Number(regra.descontoPercentual || 0).toFixed(0)}%</div>
+                    </div>
+                    <label style={{ display: "flex", alignItems: "center", gap: 8, fontSize: 12, fontWeight: 900, color: "var(--cor-vinho)" }}>
+                      <input
+                        type="checkbox"
+                        checked={regra.ativo}
+                        onChange={(e) => setRegrasCobranca(regrasCobranca.map((r) => r.tipoCartao === regra.tipoCartao ? { ...r, ativo: e.target.checked } : r))}
+                      />
+                      Ativo
+                    </label>
+                  </div>
+                  <div style={{ ...s.row, marginTop: 10 }}>
+                    <label style={s.field}>
+                      <span style={s.label}>Percentual de desconto</span>
+                      <input
+                        style={s.input}
+                        type="number"
+                        min="0"
+                        max="100"
+                        step="1"
+                        value={regra.descontoPercentual}
+                        onChange={(e) => setRegrasCobranca(regrasCobranca.map((r) => r.tipoCartao === regra.tipoCartao ? { ...r, descontoPercentual: e.target.value } : r))}
+                      />
+                    </label>
+                    <div style={{ display: "flex", alignItems: "end" }}>
+                      <button type="button" style={s.btn()} onClick={() => salvarRegra(regra)}>
+                        <Save size={16} />Salvar regra
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              ))}
+              {regrasCobranca.length === 0 && <div style={s.itemSub}>Nenhuma regra carregada.</div>}
+            </div>
           </div>
         )}
       </div>

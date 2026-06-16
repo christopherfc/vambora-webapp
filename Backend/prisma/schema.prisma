@@ -187,6 +187,8 @@ model Cobranca {
   passageiroId Int
   linhaId      Int
   valor        Decimal        @db.Decimal(10, 2)
+  descontoPercentual Decimal  @default(0) @db.Decimal(5, 2)
+  valorOriginal Decimal       @default(0) @db.Decimal(10, 2)
   status       StatusCobranca @default(APROVADA)
   codigoCartao String
   data         DateTime       @default(now())
@@ -197,6 +199,17 @@ model Cobranca {
   @@index([cobradorId, data])
   @@index([passageiroId, data])
   @@map("cobrancas")
+}
+
+model RegraCobranca {
+  id                 Int        @id @default(autoincrement())
+  tipoCartao         CartaoTipo @unique
+  descontoPercentual Decimal    @default(0) @db.Decimal(5, 2)
+  ativo              Boolean    @default(true)
+  updatedAt          DateTime   @updatedAt
+  createdAt          DateTime   @default(now())
+
+  @@map("regras_cobranca")
 }
 
 enum Role {

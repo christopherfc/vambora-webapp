@@ -67,7 +67,11 @@ export const cobrarPassagem = async (req, res) => {
     const passageiro = await prisma.user.findUnique({ where: { cartaoNumero: codigo } });
     if (!passageiro) return res.status(404).json({ mensagem: "Cartao nao encontrado" });
 
-    const valor = Number(linha.tarifa);
+    const valorOriginal = Number(linha.tarifa);
+    const regra = await prisma.regraCobranca.findUnique({ where: { tipoCartao: passageiro.cartaoTipo } });
+    const descontoPercentual = regra?.ativo ? Number(regra.descontoPercentual) : 0;
+    const valor = Number((valorOriginal * (1 - descontoPercentual / 100)).toFixed(2));
+
     if (Number(passageiro.saldo) < valor) {
       await prisma.cobranca.create({
         data: {
@@ -75,6 +79,8 @@ export const cobrarPassagem = async (req, res) => {
           passageiroId: passageiro.id,
           linhaId,
           valor,
+          valorOriginal,
+          descontoPercentual,
           status: "RECUSADA",
           codigoCartao: codigo,
         },
@@ -93,6 +99,8 @@ export const cobrarPassagem = async (req, res) => {
           passageiroId: passageiro.id,
           linhaId,
           valor,
+          valorOriginal,
+          descontoPercentual,
           status: "APROVADA",
           codigoCartao: codigo,
         },
@@ -113,6 +121,8 @@ export const cobrarPassagem = async (req, res) => {
       mensagem: "Pagamento aprovado",
       saldo: Number(resultado.atualizado.saldo),
       cobranca: { id: resultado.cobranca.id, valor },
+      descontoPercentual,
+      valorOriginal,
       passageiro: { nome: passageiro.nome, cartao: passageiro.cartaoNumero },
       linha: { id: linha.id, numero: linha.numero, nome: linha.nome },
     });

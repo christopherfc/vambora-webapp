@@ -15,6 +15,8 @@ import {
   resumo,
   salvarFaqAdmin,
   salvarNotificacaoAdmin,
+  listarRegrasCobrancaAdmin,
+  salvarRegraCobrancaAdmin,
 } from "../controllers/admin.controller.js";
 
 const router = Router();
@@ -40,5 +42,8 @@ router.delete("/notificacoes/:id", removerNotificacaoAdmin);
 
 router.get("/usuarios", listarUsuariosAdmin);
 router.put("/usuarios/:id", atualizarUsuarioAdmin);
+
+router.get("/regras-cobranca", listarRegrasCobrancaAdmin);
+router.put("/regras-cobranca", salvarRegraCobrancaAdmin);
 
 export default router;

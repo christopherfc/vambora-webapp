@@ -263,3 +263,5 @@ export const adminSalvarNotificacao = (notificacao) => {
 export const adminRemoverNotificacao = (id) => requestAdmin(`/notificacoes/${id}`, { method: "DELETE" });
 export const adminListarUsuarios = () => requestAdmin("/usuarios");
 export const adminAtualizarUsuario = (id, usuario) => requestAdmin(`/usuarios/${id}`, { method: "PUT", body: JSON.stringify(usuario) });
+export const adminListarRegrasCobranca = () => requestAdmin("/regras-cobranca");
+export const adminSalvarRegraCobranca = (regra) => requestAdmin("/regras-cobranca", { method: "PUT", body: JSON.stringify(regra) });
