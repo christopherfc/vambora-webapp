@@ -195,7 +195,10 @@ export const removerNotificacaoAdmin = async (req, res) => {
 
 export const listarUsuariosAdmin = async (req, res) => {
   try {
-    const usuarios = await prisma.user.findMany({ orderBy: { nome: "asc" } });
+    const usuarios = await prisma.user.findMany({
+      include: { linhasMotorista: true },
+      orderBy: { nome: "asc" },
+    });
     res.json({ usuarios: usuarios.map(serializarUsuario) });
   } catch (error) {
     res.status(500).json({ mensagem: "Erro ao listar usuarios" });
@@ -204,15 +207,36 @@ export const listarUsuariosAdmin = async (req, res) => {
 
 export const atualizarUsuarioAdmin = async (req, res) => {
   try {
-    const usuario = await prisma.user.update({
-      where: { id: Number(req.params.id) },
-      data: {
-        nome: req.body.nome,
-        email: req.body.email?.toLowerCase(),
-        telefone: req.body.telefone || "",
-        role: req.body.role === "ADMIN" ? "ADMIN" : "USER",
-        saldo: Number(req.body.saldo || 0),
-      },
+    const id = Number(req.params.id);
+    const role = ["ADMIN", "MOTORISTA"].includes(req.body.role) ? req.body.role : "USER";
+    const linhaIds = Array.isArray(req.body.motoristaLinhas)
+      ? req.body.motoristaLinhas.map(Number).filter(Number.isFinite)
+      : [];
+
+    const usuario = await prisma.$transaction(async (tx) => {
+      await tx.user.update({
+        where: { id },
+        data: {
+          nome: req.body.nome,
+          email: req.body.email?.toLowerCase(),
+          telefone: req.body.telefone || "",
+          role,
+          saldo: Number(req.body.saldo || 0),
+        },
+      });
+
+      await tx.motoristaLinha.deleteMany({ where: { usuarioId: id } });
+      if (role === "MOTORISTA" && linhaIds.length) {
+        await tx.motoristaLinha.createMany({
+          data: linhaIds.map((linhaId) => ({ usuarioId: id, linhaId })),
+          skipDuplicates: true,
+        });
+      }
+      if (role !== "MOTORISTA") {
+        await tx.veiculoLocalizacao.deleteMany({ where: { usuarioId: id } });
+      }
+
+      return tx.user.findUnique({ where: { id }, include: { linhasMotorista: true } });
     });
     res.json({ usuario: serializarUsuario(usuario) });
   } catch (error) {

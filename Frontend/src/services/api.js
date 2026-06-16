@@ -93,6 +93,39 @@ export async function buscarEstatisticas() {
   return res.json();   // { totalLinhas, tiposModal, tarifaMinima }
 }
 
+export async function buscarVeiculosAtivos() {
+  const res = await fetch(`${API_URL}/linhas/veiculos-ativos`);
+  return res.json();
+}
+
+export async function motoristaListarLinhas() {
+  const res = await fetch(`${API_URL}/motorista/linhas`, { headers: headers(true) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao buscar linhas do motorista");
+  return data;
+}
+
+export async function motoristaAtualizarLocalizacao(dados) {
+  const res = await fetch(`${API_URL}/motorista/localizacao`, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify(dados),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao atualizar localizacao");
+  return data;
+}
+
+export async function motoristaParar() {
+  const res = await fetch(`${API_URL}/motorista/parar`, {
+    method: "POST",
+    headers: headers(true),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao parar compartilhamento");
+  return data;
+}
+
 // ── Perfil ─────────────────────────────────────────────────────────────────────
 
 export async function buscarPerfil() {

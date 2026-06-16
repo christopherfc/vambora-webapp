@@ -27,8 +27,25 @@ export function serializarUsuario(usuario) {
       tipo: fromCartaoTipo(safe.cartaoTipo),
       saldo: Number(safe.saldo || 0),
     },
+    motoristaLinhas: (safe.linhasMotorista || []).map((item) => item.linhaId),
     createdAt: safe.createdAt,
     updatedAt: safe.updatedAt,
+  };
+}
+
+export function serializarVeiculoLocalizacao(item) {
+  return {
+    _id: String(item.id),
+    id: item.id,
+    usuarioId: item.usuarioId,
+    motorista: item.usuario?.nome || "Motorista",
+    linhaId: item.linhaId,
+    linha: item.linha ? serializarLinha(item.linha) : null,
+    latitude: Number(item.latitude),
+    longitude: Number(item.longitude),
+    precisao: item.precisao !== null && item.precisao !== undefined ? Number(item.precisao) : null,
+    ativo: item.ativo,
+    atualizadoEm: item.atualizadoEm,
   };
 }
 

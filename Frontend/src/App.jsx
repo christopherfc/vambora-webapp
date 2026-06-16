@@ -9,6 +9,7 @@ import Saldo from "./pages/Saldo.jsx";
 import Notificacoes from "./pages/Notificacoes.jsx";
 import Perfil from "./pages/Perfil.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
+import MotoristaPanel from "./pages/MotoristaPanel.jsx";
 import { estaLogado, logout, contarNotificacoesNaoLidas, usuarioAtual } from "./services/api.js";
 
 export default function App() {
@@ -81,9 +82,16 @@ export default function App() {
       {abaAtiva === "saldo"        && <Saldo />}
       {abaAtiva === "notificacoes" && <Notificacoes onAtualizar={atualizarNotiCount} />}
       {abaAtiva === "perfil"       && <Perfil onSair={handleSair} />}
+      {abaAtiva === "motorista"    && ["MOTORISTA", "ADMIN"].includes(usuario?.role) && <MotoristaPanel />}
       {abaAtiva === "admin"        && usuario?.role === "ADMIN" && <AdminPanel />}
 
-      <BottomNav abaAtiva={abaAtiva} onMudar={mudarAba} notificacoes={notiCount} admin={usuario?.role === "ADMIN"} />
+      <BottomNav
+        abaAtiva={abaAtiva}
+        onMudar={mudarAba}
+        notificacoes={notiCount}
+        admin={usuario?.role === "ADMIN"}
+        motorista={["MOTORISTA", "ADMIN"].includes(usuario?.role)}
+      />
     </>
   );
 }

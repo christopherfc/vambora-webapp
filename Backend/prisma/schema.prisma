@@ -30,6 +30,8 @@ model User {
   saldo                  Decimal        @default(0) @db.Decimal(10, 2)
   transacoes             Transacao[]
   notificacoes           Notificacao[]
+  linhasMotorista        MotoristaLinha[]
+  localizacaoVeiculo     VeiculoLocalizacao?
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
@@ -48,6 +50,8 @@ model Linha {
   ativo           Boolean      @default(true)
   pontos          RotaPonto[]
   horarios        Horario[]
+  motoristas      MotoristaLinha[]
+  veiculosAtivos  VeiculoLocalizacao[]
   createdAt       DateTime     @default(now())
   updatedAt       DateTime     @updatedAt
 
@@ -118,9 +122,38 @@ model Transacao {
   @@map("transacoes")
 }
 
+model MotoristaLinha {
+  id        Int      @id @default(autoincrement())
+  usuarioId Int
+  linhaId   Int
+  usuario   User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  linha     Linha    @relation(fields: [linhaId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@unique([usuarioId, linhaId])
+  @@map("motorista_linhas")
+}
+
+model VeiculoLocalizacao {
+  id          Int      @id @default(autoincrement())
+  usuarioId   Int      @unique
+  linhaId     Int
+  latitude    Decimal  @db.Decimal(10, 7)
+  longitude   Decimal  @db.Decimal(10, 7)
+  precisao    Decimal? @db.Decimal(10, 2)
+  ativo       Boolean  @default(true)
+  atualizadoEm DateTime @default(now())
+  usuario     User     @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  linha       Linha    @relation(fields: [linhaId], references: [id], onDelete: Cascade)
+
+  @@index([linhaId, ativo])
+  @@map("veiculo_localizacoes")
+}
+
 enum Role {
   USER
   ADMIN
+  MOTORISTA
 }
 
 enum TipoTransporte {

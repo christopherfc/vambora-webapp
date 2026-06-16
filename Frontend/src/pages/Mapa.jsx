@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
-import { MapContainer, TileLayer, Polyline, Marker, useMap } from "react-leaflet";
+import { MapContainer, TileLayer, Polyline, Marker, Popup, useMap } from "react-leaflet";
 import { Bus, Truck, Anchor, ArrowRight, X, Clock } from "lucide-react";
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
-import { buscarLinhas, buscarHorarios } from "../services/api.js";
+import { buscarLinhas, buscarHorarios, buscarVeiculosAtivos } from "../services/api.js";
 
 // Fix Leaflet default icon bug with Vite
 delete L.Icon.Default.prototype._getIconUrl;
@@ -24,6 +24,17 @@ const ICONE_TIPO = {
   van:    Truck,
   barco:  Anchor,
 };
+
+function veiculoIcone(tipo) {
+  const simbolo = tipo === "van" ? "🚐" : tipo === "barco" ? "⛴" : "🚌";
+  const cor = COR_TIPO[tipo] || "#FE8A00";
+  return L.divIcon({
+    className: "veiculo-marker",
+    html: `<div style="width:34px;height:34px;border-radius:999px;background:${cor};border:3px solid white;box-shadow:0 4px 14px rgba(0,0,0,.28);display:flex;align-items:center;justify-content:center;font-size:18px">${simbolo}</div>`,
+    iconSize: [34, 34],
+    iconAnchor: [17, 17],
+  });
+}
 
 const CHIPS = [
   { valor: "todos",  label: "Todos"  },
@@ -107,6 +118,7 @@ export default function Mapa({ onVerHorarios }) {
   const [linhaSel,     setLinhaSel]     = useState(null);
   const [painelAberto, setPainelAberto] = useState(false);
   const [todasLinhas,  setTodasLinhas]  = useState([]);
+  const [veiculos,     setVeiculos]     = useState([]);
   const [proxHorario,  setProxHorario]  = useState("—");
 
   /* Buscar todas as linhas do backend ao montar */
@@ -122,7 +134,26 @@ export default function Mapa({ onVerHorarios }) {
     carregar();
   }, []);
 
+  useEffect(() => {
+    let ativo = true;
+    async function carregarVeiculos() {
+      try {
+        const dados = await buscarVeiculosAtivos();
+        if (ativo) setVeiculos(dados.veiculos || []);
+      } catch (e) {
+        console.error(e);
+      }
+    }
+    carregarVeiculos();
+    const timer = setInterval(carregarVeiculos, 8000);
+    return () => {
+      ativo = false;
+      clearInterval(timer);
+    };
+  }, []);
+
   const linhasFiltradas = todasLinhas.filter(l => filtro === "todos" || l.tipoTransporte === filtro);
+  const veiculosFiltrados = veiculos.filter(v => filtro === "todos" || v.linha?.tipoTransporte === filtro);
 
   async function abrirPainel(linha) {
     setLinhaSel(linha);
@@ -189,12 +220,26 @@ export default function Mapa({ onVerHorarios }) {
 
           {linhasFiltradas.map(linha => {
             const inicio = linha.rota[0];
+            if (!inicio) return null;
             return (
               <Marker key={`mk-${linha._id}`} position={[inicio[0], inicio[1]]}
                 eventHandlers={{ click: () => abrirPainel(linha) }}
               />
             );
           })}
+
+          {veiculosFiltrados.map((veiculo) => (
+            <Marker
+              key={`veiculo-${veiculo.id}`}
+              position={[veiculo.latitude, veiculo.longitude]}
+              icon={veiculoIcone(veiculo.linha?.tipoTransporte)}
+            >
+              <Popup>
+                <strong>{veiculo.motorista}</strong><br />
+                {veiculo.linha ? `Linha ${veiculo.linha.numero} - ${veiculo.linha.nome}` : "Linha em operacao"}
+              </Popup>
+            </Marker>
+          ))}
         </MapContainer>
 
         {/* Legenda */}

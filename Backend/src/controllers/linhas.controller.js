@@ -1,5 +1,5 @@
 import prisma from "../config/prisma.js";
-import { agruparHorarios, serializarLinha } from "../utils/serializers.js";
+import { agruparHorarios, serializarLinha, serializarVeiculoLocalizacao } from "../utils/serializers.js";
 
 export const listarLinhas = async (req, res) => {
   try {
@@ -84,5 +84,23 @@ export const estatisticas = async (req, res) => {
     });
   } catch (error) {
     res.status(500).json({ mensagem: "Erro ao buscar estatisticas" });
+  }
+};
+
+export const veiculosAtivos = async (req, res) => {
+  try {
+    const desde = new Date(Date.now() - 2 * 60 * 1000);
+    const veiculos = await prisma.veiculoLocalizacao.findMany({
+      where: { ativo: true, atualizadoEm: { gte: desde } },
+      include: {
+        usuario: true,
+        linha: { include: { pontos: true } },
+      },
+      orderBy: { atualizadoEm: "desc" },
+    });
+
+    res.json({ veiculos: veiculos.map(serializarVeiculoLocalizacao) });
+  } catch (error) {
+    res.status(500).json({ mensagem: "Erro ao buscar veiculos ativos" });
   }
 };
