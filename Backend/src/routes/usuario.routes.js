@@ -7,6 +7,8 @@ import {
   atualizarEndereco,
   atualizarPreferencias,
   alterarTipoCartao,
+  criarSolicitacaoBeneficio,
+  listarSolicitacoesBeneficio,
 } from "../controllers/usuario.controller.js";
 
 const router = Router();
@@ -20,5 +22,7 @@ router.put("/senha", alterarSenha);
 router.put("/endereco", atualizarEndereco);
 router.put("/preferencias", atualizarPreferencias);
 router.put("/cartao/tipo", alterarTipoCartao);
+router.get("/beneficios/solicitacoes", listarSolicitacoesBeneficio);
+router.post("/beneficios/solicitacoes", criarSolicitacaoBeneficio);
 
 export default router;

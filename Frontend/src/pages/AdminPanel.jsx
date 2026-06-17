@@ -1,16 +1,19 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Save, Trash2, RefreshCw, Route, HelpCircle, Bell, Users, Percent, Search, X } from "lucide-react";
+import { Plus, Save, Trash2, RefreshCw, Route, HelpCircle, Bell, Users, Percent, Search, X, ShieldCheck, CheckCircle2, XCircle } from "lucide-react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
   adminAtualizarLinha,
   adminAtualizarUsuario,
+  adminAprovarSolicitacaoBeneficio,
   adminCriarLinha,
   adminListarFaqs,
   adminListarLinhas,
   adminListarNotificacoes,
   adminListarRegrasCobranca,
+  adminListarSolicitacoesBeneficio,
   adminListarUsuarios,
+  adminRecusarSolicitacaoBeneficio,
   adminRemoverFaq,
   adminRemoverLinha,
   adminRemoverNotificacao,
@@ -68,6 +71,7 @@ const s = {
   itemTop: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" },
   itemTitle: { fontSize: 14, fontWeight: 900, color: "var(--cor-texto)" },
   itemSub: { fontSize: 12, fontWeight: 700, color: "var(--cor-texto-suave)", marginTop: 3 },
+  badge: (status) => ({ borderRadius: 999, padding: "5px 8px", fontSize: 11, fontWeight: 900, background: status === "APROVADA" ? "var(--cor-sucesso-fundo)" : status === "RECUSADA" ? "var(--cor-erro-fundo)" : "var(--cor-primaria-light)", color: status === "APROVADA" ? "var(--cor-sucesso)" : status === "RECUSADA" ? "var(--cor-erro)" : "var(--cor-primaria)" }),
   msg: { margin: "0 0 12px", padding: 10, borderRadius: 8, background: "#E8FFF0", color: "#1E8449", fontSize: 13, fontWeight: 800 },
   mapBox: { height: 260, borderRadius: 8, overflow: "hidden", border: "1px solid var(--cor-borda)", marginBottom: 10 },
   hint: { fontSize: 12, lineHeight: 1.35, color: "var(--cor-texto-suave)", fontWeight: 700, marginBottom: 8 },
@@ -404,6 +408,8 @@ export default function AdminPanel() {
   const [notificacoes, setNotificacoes] = useState([]);
   const [usuarios, setUsuarios] = useState([]);
   const [regrasCobranca, setRegrasCobranca] = useState([]);
+  const [solicitacoesBeneficio, setSolicitacoesBeneficio] = useState([]);
+  const [statusBeneficioFiltro, setStatusBeneficioFiltro] = useState("PENDENTE");
   const [linhaForm, setLinhaForm] = useState(emptyLinha);
   const [faqForm, setFaqForm] = useState(emptyFaq);
   const [notiForm, setNotiForm] = useState(emptyNotificacao);
@@ -420,13 +426,14 @@ export default function AdminPanel() {
   const notiId = notiForm.id || notiForm._id;
 
   async function carregar() {
-    const [r, l, f, n, u, regras] = await Promise.all([
+    const [r, l, f, n, u, regras, solicitacoes] = await Promise.all([
       adminResumo(),
       adminListarLinhas(),
       adminListarFaqs(),
       adminListarNotificacoes(),
       adminListarUsuarios(),
       adminListarRegrasCobranca(),
+      adminListarSolicitacoesBeneficio(statusBeneficioFiltro),
     ]);
     setResumo(r);
     setLinhas(l.linhas || []);
@@ -434,11 +441,12 @@ export default function AdminPanel() {
     setNotificacoes(n.notificacoes || []);
     setUsuarios(u.usuarios || []);
     setRegrasCobranca(regras.regras || []);
+    setSolicitacoesBeneficio(solicitacoes.solicitacoes || []);
   }
 
   useEffect(() => {
     carregar().catch((e) => setMsg(e.message));
-  }, []);
+  }, [statusBeneficioFiltro]);
 
   function avisar(texto) {
     setMsg(texto);
@@ -493,6 +501,20 @@ export default function AdminPanel() {
     avisar("Regra de cobranca salva.");
   }
 
+  async function aprovarBeneficio(solicitacao) {
+    await adminAprovarSolicitacaoBeneficio(solicitacao.id, "Beneficio aprovado pelo admin.");
+    await carregar();
+    avisar("Beneficio aprovado.");
+  }
+
+  async function recusarBeneficio(solicitacao) {
+    const motivo = window.prompt("Motivo da recusa", "Dados insuficientes para aprovacao.");
+    if (motivo === null) return;
+    await adminRecusarSolicitacaoBeneficio(solicitacao.id, motivo.trim() || "Solicitacao recusada pelo admin.");
+    await carregar();
+    avisar("Beneficio recusado.");
+  }
+
   function toggleLinhaMotorista(linhaId) {
     const atuais = usuarioEditando?.motoristaLinhas || [];
     const existe = atuais.map(String).includes(String(linhaId));
@@ -521,6 +543,7 @@ export default function AdminPanel() {
     { id: "notificacoes", label: "Avisos", Icone: Bell },
     { id: "usuarios", label: "Usuarios", Icone: Users },
     { id: "cobranca", label: "Cobranca", Icone: Percent },
+    { id: "beneficios", label: "Beneficios", Icone: ShieldCheck },
   ], []);
 
   const usuariosFiltrados = useMemo(() => {
@@ -659,6 +682,7 @@ export default function AdminPanel() {
                   <label style={s.field}><span style={s.label}>Role</span><select style={s.input} value={usuarioEditando.role} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, role: e.target.value })}><option value="USER">USER</option><option value="MOTORISTA">MOTORISTA</option><option value="COBRADOR">COBRADOR</option><option value="ADMIN">ADMIN</option></select></label>
                   <label style={s.field}><span style={s.label}>Saldo</span><input style={s.input} type="number" step="0.01" value={usuarioEditando.saldo ?? 0} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, saldo: e.target.value })} /></label>
                 </div>
+                <label style={s.field}><span style={s.label}>Categoria do cartao</span><select style={s.input} value={usuarioEditando.cartao?.tipo || "Comum"} onChange={(e) => setUsuarioEditando({ ...usuarioEditando, cartao: { ...(usuarioEditando.cartao || {}), tipo: e.target.value } })}><option value="Comum">Comum</option><option value="Estudante">Estudante</option><option value="Idoso">Idoso</option></select></label>
                 {usuarioEditando.role === "MOTORISTA" && (
                   <div style={s.field}>
                     <span style={s.label}>Linhas permitidas para o motorista</span>
@@ -752,6 +776,46 @@ export default function AdminPanel() {
                 ))}
                 {usuariosFiltrados.length === 0 && <div style={s.itemSub}>Nenhum usuario encontrado com esses filtros.</div>}
               </div>
+            </div>
+          </div>
+        )}
+
+        {aba === "beneficios" && (
+          <div style={s.panel}>
+            <div style={s.itemTop}>
+              <div>
+                <div style={s.panelTitle}>Solicitacoes de beneficio</div>
+                <div style={s.itemSub}>Aprovacoes alteram automaticamente a categoria do cartao do usuario.</div>
+              </div>
+              <select style={{ ...s.input, maxWidth: 180 }} value={statusBeneficioFiltro} onChange={(e) => setStatusBeneficioFiltro(e.target.value)}>
+                <option value="PENDENTE">Pendentes</option>
+                <option value="APROVADA">Aprovadas</option>
+                <option value="RECUSADA">Recusadas</option>
+                <option value="TODOS">Todas</option>
+              </select>
+            </div>
+            <div style={{ ...s.list, marginTop: 14 }}>
+              {solicitacoesBeneficio.map((solicitacao) => (
+                <div key={solicitacao.id} style={s.item(false)}>
+                  <div style={s.itemTop}>
+                    <div>
+                      <div style={s.itemTitle}>{solicitacao.usuario?.nome || "Usuario"} - {solicitacao.tipoSolicitado}</div>
+                      <div style={s.itemSub}>{solicitacao.usuario?.email || ""} | cartao atual {solicitacao.usuario?.cartao?.tipo || "Comum"}</div>
+                    </div>
+                    <span style={s.badge(solicitacao.status)}>{solicitacao.status}</span>
+                  </div>
+                  <div style={{ ...s.itemSub, marginTop: 10 }}><strong>Dados:</strong> {solicitacao.dados}</div>
+                  {solicitacao.observacao && <div style={s.itemSub}><strong>Observacao:</strong> {solicitacao.observacao}</div>}
+                  {solicitacao.respostaAdmin && <div style={s.itemSub}><strong>Resposta:</strong> {solicitacao.respostaAdmin}</div>}
+                  {solicitacao.status === "PENDENTE" && (
+                    <div style={{ ...s.actions, marginTop: 12 }}>
+                      <button type="button" style={s.btn()} onClick={() => aprovarBeneficio(solicitacao)}><CheckCircle2 size={16} />Aprovar</button>
+                      <button type="button" style={s.btn("danger")} onClick={() => recusarBeneficio(solicitacao)}><XCircle size={16} />Recusar</button>
+                    </div>
+                  )}
+                </div>
+              ))}
+              {solicitacoesBeneficio.length === 0 && <div style={s.itemSub}>Nenhuma solicitacao encontrada.</div>}
             </div>
           </div>
         )}

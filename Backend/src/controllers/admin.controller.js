@@ -5,6 +5,7 @@ import {
   serializarFaq,
   serializarLinha,
   serializarNotificacao,
+  serializarSolicitacaoBeneficio,
   serializarUsuario,
   toCartaoTipo,
 } from "../utils/serializers.js";
@@ -235,6 +236,8 @@ export const atualizarUsuarioAdmin = async (req, res) => {
     const cobradorLinhaIds = Array.isArray(req.body.cobradorLinhas)
       ? req.body.cobradorLinhas.map(Number).filter(Number.isFinite)
       : [];
+    const cartaoTipo = req.body.cartao?.tipo || req.body.cartaoTipo;
+    const cartaoTipoNormalizado = cartaoTipo ? toCartaoTipo(cartaoTipo) : null;
 
     const usuario = await prisma.$transaction(async (tx) => {
       await tx.user.update({
@@ -245,6 +248,9 @@ export const atualizarUsuarioAdmin = async (req, res) => {
           telefone: req.body.telefone || "",
           role,
           saldo: Number(req.body.saldo || 0),
+          ...(cartaoTipoNormalizado && ["COMUM", "ESTUDANTE", "IDOSO"].includes(cartaoTipoNormalizado)
+            ? { cartaoTipo: cartaoTipoNormalizado }
+            : {}),
         },
       });
 
@@ -271,6 +277,89 @@ export const atualizarUsuarioAdmin = async (req, res) => {
     res.json({ usuario: serializarUsuario(usuario) });
   } catch (error) {
     res.status(400).json({ mensagem: "Erro ao atualizar usuario" });
+  }
+};
+
+export const listarSolicitacoesBeneficioAdmin = async (req, res) => {
+  try {
+    const status = String(req.query.status || "PENDENTE").toUpperCase();
+    const where = ["PENDENTE", "APROVADA", "RECUSADA"].includes(status) ? { status } : {};
+    const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
+      where,
+      include: { usuario: { include: { linhasMotorista: true, linhasCobrador: true } } },
+      orderBy: [{ status: "asc" }, { createdAt: "desc" }],
+    });
+    res.json({ solicitacoes: solicitacoes.map(serializarSolicitacaoBeneficio) });
+  } catch (error) {
+    res.status(500).json({ mensagem: "Erro ao listar solicitacoes de beneficio" });
+  }
+};
+
+export const aprovarSolicitacaoBeneficioAdmin = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const respostaAdmin = String(req.body.respostaAdmin || "").trim();
+
+    const solicitacao = await prisma.$transaction(async (tx) => {
+      const atual = await tx.solicitacaoBeneficio.findUnique({ where: { id } });
+      if (!atual) throw new Error("not_found");
+      if (atual.status !== "PENDENTE") throw new Error("already_reviewed");
+
+      await tx.user.update({
+        where: { id: atual.usuarioId },
+        data: { cartaoTipo: atual.tipoSolicitado },
+      });
+
+      return tx.solicitacaoBeneficio.update({
+        where: { id },
+        data: {
+          status: "APROVADA",
+          respostaAdmin,
+          analisadoEm: new Date(),
+        },
+        include: { usuario: { include: { linhasMotorista: true, linhasCobrador: true } } },
+      });
+    });
+
+    res.json({
+      mensagem: "Beneficio aprovado",
+      solicitacao: serializarSolicitacaoBeneficio(solicitacao),
+    });
+  } catch (error) {
+    if (error.message === "not_found") return res.status(404).json({ mensagem: "Solicitacao nao encontrada" });
+    if (error.message === "already_reviewed") return res.status(400).json({ mensagem: "Solicitacao ja foi analisada" });
+    res.status(500).json({ mensagem: "Erro ao aprovar solicitacao" });
+  }
+};
+
+export const recusarSolicitacaoBeneficioAdmin = async (req, res) => {
+  try {
+    const id = Number(req.params.id);
+    const respostaAdmin = String(req.body.respostaAdmin || "").trim();
+    if (!respostaAdmin) {
+      return res.status(400).json({ mensagem: "Informe o motivo da recusa" });
+    }
+
+    const atual = await prisma.solicitacaoBeneficio.findUnique({ where: { id } });
+    if (!atual) return res.status(404).json({ mensagem: "Solicitacao nao encontrada" });
+    if (atual.status !== "PENDENTE") return res.status(400).json({ mensagem: "Solicitacao ja foi analisada" });
+
+    const solicitacao = await prisma.solicitacaoBeneficio.update({
+      where: { id },
+      data: {
+        status: "RECUSADA",
+        respostaAdmin,
+        analisadoEm: new Date(),
+      },
+      include: { usuario: { include: { linhasMotorista: true, linhasCobrador: true } } },
+    });
+
+    res.json({
+      mensagem: "Beneficio recusado",
+      solicitacao: serializarSolicitacaoBeneficio(solicitacao),
+    });
+  } catch (error) {
+    res.status(500).json({ mensagem: "Erro ao recusar solicitacao" });
   }
 };
 

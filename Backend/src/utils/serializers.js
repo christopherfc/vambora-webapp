@@ -34,6 +34,23 @@ export function serializarUsuario(usuario) {
   };
 }
 
+export function serializarSolicitacaoBeneficio(solicitacao) {
+  if (!solicitacao) return null;
+  return {
+    id: solicitacao.id,
+    usuarioId: solicitacao.usuarioId,
+    tipoSolicitado: fromCartaoTipo(solicitacao.tipoSolicitado),
+    status: solicitacao.status,
+    dados: solicitacao.dados,
+    observacao: solicitacao.observacao || "",
+    respostaAdmin: solicitacao.respostaAdmin || "",
+    analisadoEm: solicitacao.analisadoEm,
+    createdAt: solicitacao.createdAt,
+    updatedAt: solicitacao.updatedAt,
+    usuario: solicitacao.usuario ? serializarUsuario(solicitacao.usuario) : null,
+  };
+}
+
 export function serializarVeiculoLocalizacao(item) {
   return {
     _id: String(item.id),

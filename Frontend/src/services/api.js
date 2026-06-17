@@ -213,6 +213,24 @@ export async function alterarTipoCartao(tipo) {
   return res.json();
 }
 
+export async function listarSolicitacoesBeneficio() {
+  const res = await fetch(`${API_URL}/usuario/beneficios/solicitacoes`, { headers: headers(true) });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao listar solicitacoes");
+  return data;
+}
+
+export async function criarSolicitacaoBeneficio(dados) {
+  const res = await fetch(`${API_URL}/usuario/beneficios/solicitacoes`, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify(dados),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao solicitar beneficio");
+  return data;
+}
+
 // ── Saldo e Transações ─────────────────────────────────────────────────────────
 
 export async function buscarSaldo() {
@@ -289,5 +307,8 @@ export const adminSalvarNotificacao = (notificacao) => {
 export const adminRemoverNotificacao = (id) => requestAdmin(`/notificacoes/${id}`, { method: "DELETE" });
 export const adminListarUsuarios = () => requestAdmin("/usuarios");
 export const adminAtualizarUsuario = (id, usuario) => requestAdmin(`/usuarios/${id}`, { method: "PUT", body: JSON.stringify(usuario) });
+export const adminListarSolicitacoesBeneficio = (status = "PENDENTE") => requestAdmin(`/beneficios/solicitacoes?status=${encodeURIComponent(status)}`);
+export const adminAprovarSolicitacaoBeneficio = (id, respostaAdmin = "") => requestAdmin(`/beneficios/solicitacoes/${id}/aprovar`, { method: "POST", body: JSON.stringify({ respostaAdmin }) });
+export const adminRecusarSolicitacaoBeneficio = (id, respostaAdmin) => requestAdmin(`/beneficios/solicitacoes/${id}/recusar`, { method: "POST", body: JSON.stringify({ respostaAdmin }) });
 export const adminListarRegrasCobranca = () => requestAdmin("/regras-cobranca");
 export const adminSalvarRegraCobranca = (regra) => requestAdmin("/regras-cobranca", { method: "PUT", body: JSON.stringify(regra) });

@@ -1,7 +1,13 @@
 import { useState, useEffect } from "react";
-import { Bus, Truck, Anchor, Zap, Plus, FileText } from "lucide-react";
+import { Bus, Truck, Anchor, Zap, Plus, FileText, Send, ShieldCheck } from "lucide-react";
 import QRCode from "qrcode";
-import { buscarSaldo, buscarTransacoes, alterarTipoCartao, criarRecarga } from "../services/api.js";
+import {
+  buscarSaldo,
+  buscarTransacoes,
+  criarRecarga,
+  criarSolicitacaoBeneficio,
+  listarSolicitacoesBeneficio,
+} from "../services/api.js";
 
 const CONFIG_TIPO = {
   onibus:  { fundo: "var(--cor-onibus-fundo)", cor: "#2471A3", Icone: Bus    },
@@ -9,8 +15,6 @@ const CONFIG_TIPO = {
   van:     { fundo: "var(--cor-van-fundo)",    cor: "#1E8449", Icone: Truck  },
   recarga: { fundo: "var(--cor-sucesso-fundo)", cor: "#1E8449", Icone: Zap   },
 };
-
-const TIPOS_CARTAO = ["Comum", "Estudante", "Idoso"];
 
 // ─── Ícone de chip de cartão ──────────────────────────────────────────────────
 function Chip() {
@@ -146,6 +150,14 @@ const s = {
   recargaBox:   { display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "center" },
   recargaInput: { width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--cor-borda)", fontFamily: "var(--font-family)", fontWeight: 800, boxSizing: "border-box" },
   erro:         { background: "var(--cor-erro-fundo)", color: "var(--cor-erro)", padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 800 },
+  sucesso:      { background: "var(--cor-sucesso-fundo)", color: "var(--cor-sucesso)", padding: 10, borderRadius: 10, fontSize: 13, fontWeight: 800 },
+  beneficioBox: { margin: "14px 16px 0", background: "#fff", borderRadius: 16, padding: 16, boxShadow: "var(--shadow-sm)", display: "grid", gap: 10 },
+  beneficioHeader: { display: "flex", alignItems: "center", justifyContent: "space-between", gap: 10 },
+  beneficioTitle: { display: "flex", alignItems: "center", gap: 8, fontSize: 14, fontWeight: 900, color: "var(--cor-vinho)" },
+  beneficioStatus: { fontSize: 11, fontWeight: 900, color: "var(--cor-texto-suave)", textTransform: "uppercase" },
+  field:        { display: "grid", gap: 5 },
+  label:        { fontSize: 11, fontWeight: 900, color: "var(--cor-texto-suave)", textTransform: "uppercase" },
+  input:        { width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--cor-borda)", fontFamily: "var(--font-family)", fontWeight: 700, boxSizing: "border-box" },
 };
 
 export default function Saldo() {
@@ -156,6 +168,13 @@ export default function Saldo() {
   const [valorRecarga,setValorRecarga]= useState("20");
   const [erroRecarga, setErroRecarga] = useState("");
   const [criandoRecarga, setCriandoRecarga] = useState(false);
+  const [tipoSolicitado, setTipoSolicitado] = useState("Estudante");
+  const [dadosBeneficio, setDadosBeneficio] = useState("");
+  const [observacaoBeneficio, setObservacaoBeneficio] = useState("");
+  const [solicitacoesBeneficio, setSolicitacoesBeneficio] = useState([]);
+  const [msgBeneficio, setMsgBeneficio] = useState("");
+  const [erroBeneficio, setErroBeneficio] = useState("");
+  const [enviandoBeneficio, setEnviandoBeneficio] = useState(false);
   const [transacoes,  setTransacoes]  = useState([]);
   const [carregando,  setCarregando]  = useState(true);
 
@@ -163,14 +182,16 @@ export default function Saldo() {
     async function carregar() {
       setCarregando(true);
       try {
-        const [dadosSaldo, dadosTransacoes] = await Promise.all([
+        const [dadosSaldo, dadosTransacoes, dadosBeneficio] = await Promise.all([
           buscarSaldo(),
           buscarTransacoes(10),
+          listarSolicitacoesBeneficio(),
         ]);
         setSaldo(dadosSaldo.saldo);
         if (dadosSaldo.cartao?.tipo) setTipoCartao(dadosSaldo.cartao.tipo);
         if (dadosSaldo.cartao?.numero) setNumeroCartao(dadosSaldo.cartao.numero);
         setTransacoes(dadosTransacoes.transacoes || []);
+        setSolicitacoesBeneficio(dadosBeneficio.solicitacoes || []);
       } catch (e) {
         console.error(e);
       } finally {
@@ -187,12 +208,24 @@ export default function Saldo() {
       .catch(() => setQrSrc(""));
   }, [numeroCartao]);
 
-  async function handleTipoCartao(tipo) {
-    setTipoCartao(tipo);
+  async function handleSolicitarBeneficio() {
+    setMsgBeneficio("");
+    setErroBeneficio("");
+    setEnviandoBeneficio(true);
     try {
-      await alterarTipoCartao(tipo);
-    } catch (e) {
-      console.error(e);
+      const data = await criarSolicitacaoBeneficio({
+        tipoSolicitado,
+        dados: dadosBeneficio,
+        observacao: observacaoBeneficio,
+      });
+      setSolicitacoesBeneficio([data.solicitacao, ...solicitacoesBeneficio]);
+      setDadosBeneficio("");
+      setObservacaoBeneficio("");
+      setMsgBeneficio(data.mensagem || "Solicitacao enviada.");
+    } catch (error) {
+      setErroBeneficio(error.message);
+    } finally {
+      setEnviandoBeneficio(false);
     }
   }
 
@@ -227,6 +260,9 @@ export default function Saldo() {
     );
   }
 
+  const solicitacaoPendente = solicitacoesBeneficio.find((s) => s.status === "PENDENTE");
+  const ultimaSolicitacao = solicitacoesBeneficio[0];
+
   return (
     <div style={s.container}>
       <div style={s.header}>
@@ -243,12 +279,56 @@ export default function Saldo() {
         <div style={s.qrCodeText}>{numeroCartao}</div>
       </div>
 
-      <div style={s.acoes}>
-        <div style={s.chipRow}>
-          {TIPOS_CARTAO.map(t => (
-            <button key={t} style={s.chipCartao(tipoCartao === t)} onClick={() => handleTipoCartao(t)}>{t}</button>
-          ))}
+      <div style={s.beneficioBox}>
+        <div style={s.beneficioHeader}>
+          <div style={s.beneficioTitle}><ShieldCheck size={17} /> Beneficio do cartao</div>
+          <div style={s.beneficioStatus}>Atual: {tipoCartao}</div>
         </div>
+        {solicitacaoPendente ? (
+          <div style={s.sucesso}>Solicitacao de {solicitacaoPendente.tipoSolicitado} pendente de analise.</div>
+        ) : (
+          <>
+            <label style={s.field}>
+              <span style={s.label}>Categoria solicitada</span>
+              <select style={s.input} value={tipoSolicitado} onChange={(e) => setTipoSolicitado(e.target.value)}>
+                <option value="Estudante">Estudante</option>
+                <option value="Idoso">Idoso</option>
+              </select>
+            </label>
+            <label style={s.field}>
+              <span style={s.label}>{tipoSolicitado === "Estudante" ? "Instituicao e matricula" : "Data de nascimento ou documento"}</span>
+              <input
+                style={s.input}
+                value={dadosBeneficio}
+                onChange={(e) => setDadosBeneficio(e.target.value)}
+                placeholder={tipoSolicitado === "Estudante" ? "Ex: UFAL, matricula 20260001" : "Ex: Nascimento 10/05/1950"}
+              />
+            </label>
+            <label style={s.field}>
+              <span style={s.label}>Observacao</span>
+              <textarea
+                rows={3}
+                style={s.input}
+                value={observacaoBeneficio}
+                onChange={(e) => setObservacaoBeneficio(e.target.value)}
+                placeholder="Informacoes adicionais para o admin"
+              />
+            </label>
+            <button style={s.btn(true)} onClick={handleSolicitarBeneficio} disabled={enviandoBeneficio}>
+              <Send size={15} strokeWidth={2.5} /> Solicitar analise
+            </button>
+          </>
+        )}
+        {ultimaSolicitacao && ultimaSolicitacao.status !== "PENDENTE" && (
+          <div style={ultimaSolicitacao.status === "APROVADA" ? s.sucesso : s.erro}>
+            Ultima solicitacao: {ultimaSolicitacao.status.toLowerCase()}{ultimaSolicitacao.respostaAdmin ? ` - ${ultimaSolicitacao.respostaAdmin}` : ""}
+          </div>
+        )}
+        {msgBeneficio && <div style={s.sucesso}>{msgBeneficio}</div>}
+        {erroBeneficio && <div style={s.erro}>{erroBeneficio}</div>}
+      </div>
+
+      <div style={s.acoes}>
         <div style={s.botoesRow}>
           <button style={s.btn(true)} onClick={handleRecarga} disabled={criandoRecarga}>
             <Plus size={15} strokeWidth={2.5} /> Recarregar

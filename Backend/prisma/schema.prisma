@@ -36,6 +36,7 @@ model User {
   cobrancasFeitas        Cobranca[]     @relation("CobradorCobrancas")
   cobrancasRecebidas     Cobranca[]     @relation("PassageiroCobrancas")
   recargas               Recarga[]
+  solicitacoesBeneficio   SolicitacaoBeneficio[]
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
@@ -229,6 +230,24 @@ model Recarga {
   @@map("recargas")
 }
 
+model SolicitacaoBeneficio {
+  id              Int                       @id @default(autoincrement())
+  usuarioId       Int
+  tipoSolicitado  CartaoTipo
+  status          StatusSolicitacaoBeneficio @default(PENDENTE)
+  dados           String                    @db.Text
+  observacao      String                    @default("") @db.Text
+  respostaAdmin   String?                   @db.Text
+  analisadoEm     DateTime?
+  usuario         User                      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  createdAt       DateTime                  @default(now())
+  updatedAt       DateTime                  @updatedAt
+
+  @@index([usuarioId, createdAt])
+  @@index([status, createdAt])
+  @@map("solicitacoes_beneficio")
+}
+
 enum Role {
   USER
   ADMIN
@@ -277,4 +296,10 @@ enum StatusRecarga {
   APROVADA
   RECUSADA
   CANCELADA
+}
+
+enum StatusSolicitacaoBeneficio {
+  PENDENTE
+  APROVADA
+  RECUSADA
 }

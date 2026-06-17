@@ -4,11 +4,14 @@ import admin from "../middlewares/admin.js";
 import {
   atualizarLinhaAdmin,
   atualizarUsuarioAdmin,
+  aprovarSolicitacaoBeneficioAdmin,
   criarLinhaAdmin,
   listarFaqsAdmin,
   listarLinhasAdmin,
   listarNotificacoesAdmin,
+  listarSolicitacoesBeneficioAdmin,
   listarUsuariosAdmin,
+  recusarSolicitacaoBeneficioAdmin,
   removerFaqAdmin,
   removerLinhaAdmin,
   removerNotificacaoAdmin,
@@ -42,6 +45,10 @@ router.delete("/notificacoes/:id", removerNotificacaoAdmin);
 
 router.get("/usuarios", listarUsuariosAdmin);
 router.put("/usuarios/:id", atualizarUsuarioAdmin);
+
+router.get("/beneficios/solicitacoes", listarSolicitacoesBeneficioAdmin);
+router.post("/beneficios/solicitacoes/:id/aprovar", aprovarSolicitacaoBeneficioAdmin);
+router.post("/beneficios/solicitacoes/:id/recusar", recusarSolicitacaoBeneficioAdmin);
 
 router.get("/regras-cobranca", listarRegrasCobrancaAdmin);
 router.put("/regras-cobranca", salvarRegraCobrancaAdmin);

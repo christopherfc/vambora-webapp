@@ -1,6 +1,6 @@
 import bcrypt from "bcrypt";
 import prisma from "../config/prisma.js";
-import { serializarUsuario, toCartaoTipo } from "../utils/serializers.js";
+import { serializarSolicitacaoBeneficio, serializarUsuario, toCartaoTipo } from "../utils/serializers.js";
 
 export const obterPerfil = async (req, res) => {
   try {
@@ -103,20 +103,63 @@ export const atualizarPreferencias = async (req, res) => {
 };
 
 export const alterarTipoCartao = async (req, res) => {
-  try {
-    const { tipo } = req.body;
+  return res.status(403).json({
+    mensagem: "A troca de categoria do cartao precisa ser solicitada e aprovada pelo admin",
+  });
+};
 
-    if (!tipo || !["Comum", "Estudante", "Idoso"].includes(tipo)) {
-      return res.status(400).json({ mensagem: "Tipo de cartao invalido. Use: Comum, Estudante ou Idoso" });
+export const listarSolicitacoesBeneficio = async (req, res) => {
+  try {
+    const solicitacoes = await prisma.solicitacaoBeneficio.findMany({
+      where: { usuarioId: req.usuario },
+      orderBy: { createdAt: "desc" },
+    });
+    res.json({ solicitacoes: solicitacoes.map(serializarSolicitacaoBeneficio) });
+  } catch (error) {
+    res.status(500).json({ mensagem: "Erro ao listar solicitacoes de beneficio" });
+  }
+};
+
+export const criarSolicitacaoBeneficio = async (req, res) => {
+  try {
+    const tipoSolicitado = toCartaoTipo(req.body.tipoSolicitado);
+    const dados = String(req.body.dados || "").trim();
+    const observacao = String(req.body.observacao || "").trim();
+
+    if (!["ESTUDANTE", "IDOSO"].includes(tipoSolicitado)) {
+      return res.status(400).json({ mensagem: "Solicite apenas beneficio de Estudante ou Idoso" });
+    }
+    if (dados.length < 5) {
+      return res.status(400).json({ mensagem: "Informe os dados para analise do beneficio" });
     }
 
-    const usuario = await prisma.user.update({
-      where: { id: req.usuario },
-      data: { cartaoTipo: toCartaoTipo(tipo) },
+    const usuario = await prisma.user.findUnique({ where: { id: req.usuario } });
+    if (!usuario) return res.status(404).json({ mensagem: "Usuario nao encontrado" });
+    if (usuario.cartaoTipo === tipoSolicitado) {
+      return res.status(400).json({ mensagem: "Seu cartao ja possui esta categoria" });
+    }
+
+    const pendente = await prisma.solicitacaoBeneficio.findFirst({
+      where: { usuarioId: req.usuario, status: "PENDENTE" },
+    });
+    if (pendente) {
+      return res.status(409).json({ mensagem: "Voce ja possui uma solicitacao pendente" });
+    }
+
+    const solicitacao = await prisma.solicitacaoBeneficio.create({
+      data: {
+        usuarioId: req.usuario,
+        tipoSolicitado,
+        dados,
+        observacao,
+      },
     });
 
-    res.json({ cartao: serializarUsuario(usuario).cartao });
+    res.status(201).json({
+      mensagem: "Solicitacao enviada para analise",
+      solicitacao: serializarSolicitacaoBeneficio(solicitacao),
+    });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao alterar tipo do cartao" });
+    res.status(500).json({ mensagem: "Erro ao criar solicitacao de beneficio" });
   }
 };
