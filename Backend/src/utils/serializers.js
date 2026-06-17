@@ -43,6 +43,10 @@ export function serializarSolicitacaoBeneficio(solicitacao) {
     status: solicitacao.status,
     dados: solicitacao.dados,
     observacao: solicitacao.observacao || "",
+    documentos: {
+      frenteUrl: solicitacao.documentoFrenteUrl || "",
+      versoUrl: solicitacao.documentoVersoUrl || "",
+    },
     respostaAdmin: solicitacao.respostaAdmin || "",
     analisadoEm: solicitacao.analisadoEm,
     createdAt: solicitacao.createdAt,

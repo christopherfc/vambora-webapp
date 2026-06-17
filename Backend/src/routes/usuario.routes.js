@@ -1,5 +1,6 @@
 import { Router } from "express";
 import auth from "../middlewares/auth.js";
+import uploadDocumentos from "../middlewares/uploadDocumentos.js";
 import {
   obterPerfil,
   atualizarPerfil,
@@ -23,6 +24,6 @@ router.put("/endereco", atualizarEndereco);
 router.put("/preferencias", atualizarPreferencias);
 router.put("/cartao/tipo", alterarTipoCartao);
 router.get("/beneficios/solicitacoes", listarSolicitacoesBeneficio);
-router.post("/beneficios/solicitacoes", criarSolicitacaoBeneficio);
+router.post("/beneficios/solicitacoes", uploadDocumentos, criarSolicitacaoBeneficio);
 
 export default router;

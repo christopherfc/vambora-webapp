@@ -237,6 +237,8 @@ model SolicitacaoBeneficio {
   status          StatusSolicitacaoBeneficio @default(PENDENTE)
   dados           String                    @db.Text
   observacao      String                    @default("") @db.Text
+  documentoFrenteUrl String?                @db.Text
+  documentoVersoUrl  String?                @db.Text
   respostaAdmin   String?                   @db.Text
   analisadoEm     DateTime?
   usuario         User                      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)

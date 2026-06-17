@@ -807,6 +807,16 @@ export default function AdminPanel() {
                   <div style={{ ...s.itemSub, marginTop: 10 }}><strong>Dados:</strong> {solicitacao.dados}</div>
                   {solicitacao.observacao && <div style={s.itemSub}><strong>Observacao:</strong> {solicitacao.observacao}</div>}
                   {solicitacao.respostaAdmin && <div style={s.itemSub}><strong>Resposta:</strong> {solicitacao.respostaAdmin}</div>}
+                  {(solicitacao.documentos?.frenteUrl || solicitacao.documentos?.versoUrl) && (
+                    <div style={{ ...s.actions, marginTop: 10 }}>
+                      {solicitacao.documentos?.frenteUrl && (
+                        <a style={s.btn("ghost")} href={solicitacao.documentos.frenteUrl} target="_blank" rel="noreferrer">Ver frente</a>
+                      )}
+                      {solicitacao.documentos?.versoUrl && (
+                        <a style={s.btn("ghost")} href={solicitacao.documentos.versoUrl} target="_blank" rel="noreferrer">Ver verso</a>
+                      )}
+                    </div>
+                  )}
                   {solicitacao.status === "PENDENTE" && (
                     <div style={{ ...s.actions, marginTop: 12 }}>
                       <button type="button" style={s.btn()} onClick={() => aprovarBeneficio(solicitacao)}><CheckCircle2 size={16} />Aprovar</button>

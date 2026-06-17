@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Bus, Truck, Anchor, Zap, Plus, FileText, Send, ShieldCheck } from "lucide-react";
+import { Bus, Truck, Anchor, Zap, Plus, FileText, Send, ShieldCheck, X } from "lucide-react";
 import QRCode from "qrcode";
 import {
   buscarSaldo,
@@ -59,6 +59,27 @@ function formatarData(dataISO) {
   if (dataObj.getTime() === hoje.getTime()) return `Hoje, ${hhmm}`;
   if (dataObj.getTime() === ontem.getTime()) return `Ontem, ${hhmm}`;
   return `${String(data.getDate()).padStart(2, "0")}/${String(data.getMonth() + 1).padStart(2, "0")}, ${hhmm}`;
+}
+
+function formatarTamanho(bytes = 0) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+}
+
+function DocumentoPreview({ titulo, arquivo, url, onRemove }) {
+  if (!arquivo || !url) return null;
+  return (
+    <div style={s.previewBox}>
+      <img src={url} alt={`Previa ${titulo}`} style={s.previewImg} />
+      <div style={s.previewInfo}>
+        <div style={s.previewTitle}>{titulo}</div>
+        <div style={s.fileHint}>{arquivo.name} | {formatarTamanho(arquivo.size)}</div>
+      </div>
+      <button type="button" style={s.previewRemove} onClick={onRemove} aria-label={`Remover ${titulo}`}>
+        <X size={15} />
+      </button>
+    </div>
+  );
 }
 
 // ─── Cartão Vambora ───────────────────────────────────────────────────────────
@@ -158,6 +179,12 @@ const s = {
   field:        { display: "grid", gap: 5 },
   label:        { fontSize: 11, fontWeight: 900, color: "var(--cor-texto-suave)", textTransform: "uppercase" },
   input:        { width: "100%", padding: "12px", borderRadius: 12, border: "1px solid var(--cor-borda)", fontFamily: "var(--font-family)", fontWeight: 700, boxSizing: "border-box" },
+  fileHint:     { fontSize: 11, color: "var(--cor-texto-suave)", fontWeight: 700 },
+  previewBox:   { display: "grid", gridTemplateColumns: "74px 1fr auto", gap: 10, alignItems: "center", border: "1px solid var(--cor-borda)", borderRadius: 12, padding: 8, background: "var(--cor-borda-suave)" },
+  previewImg:   { width: 74, height: 54, borderRadius: 8, objectFit: "cover", background: "#fff" },
+  previewInfo:  { minWidth: 0 },
+  previewTitle: { fontSize: 13, fontWeight: 900, color: "var(--cor-texto)" },
+  previewRemove:{ width: 32, height: 32, border: "none", borderRadius: 10, background: "#fff", color: "var(--cor-erro)", display: "flex", alignItems: "center", justifyContent: "center", cursor: "pointer" },
 };
 
 export default function Saldo() {
@@ -171,6 +198,10 @@ export default function Saldo() {
   const [tipoSolicitado, setTipoSolicitado] = useState("Estudante");
   const [dadosBeneficio, setDadosBeneficio] = useState("");
   const [observacaoBeneficio, setObservacaoBeneficio] = useState("");
+  const [documentoFrente, setDocumentoFrente] = useState(null);
+  const [documentoVerso, setDocumentoVerso] = useState(null);
+  const [documentoFrentePreview, setDocumentoFrentePreview] = useState("");
+  const [documentoVersoPreview, setDocumentoVersoPreview] = useState("");
   const [solicitacoesBeneficio, setSolicitacoesBeneficio] = useState([]);
   const [msgBeneficio, setMsgBeneficio] = useState("");
   const [erroBeneficio, setErroBeneficio] = useState("");
@@ -208,19 +239,50 @@ export default function Saldo() {
       .catch(() => setQrSrc(""));
   }, [numeroCartao]);
 
+  useEffect(() => {
+    if (!documentoFrente) {
+      setDocumentoFrentePreview("");
+      return;
+    }
+    const url = URL.createObjectURL(documentoFrente);
+    setDocumentoFrentePreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [documentoFrente]);
+
+  useEffect(() => {
+    if (!documentoVerso) {
+      setDocumentoVersoPreview("");
+      return;
+    }
+    const url = URL.createObjectURL(documentoVerso);
+    setDocumentoVersoPreview(url);
+    return () => URL.revokeObjectURL(url);
+  }, [documentoVerso]);
+
   async function handleSolicitarBeneficio() {
     setMsgBeneficio("");
     setErroBeneficio("");
+    if (!documentoFrente || !documentoVerso) {
+      setErroBeneficio("Envie a foto da frente e do verso do documento.");
+      return;
+    }
     setEnviandoBeneficio(true);
     try {
-      const data = await criarSolicitacaoBeneficio({
-        tipoSolicitado,
-        dados: dadosBeneficio,
-        observacao: observacaoBeneficio,
-      });
+      const formData = new FormData();
+      formData.append("tipoSolicitado", tipoSolicitado);
+      formData.append("dados", dadosBeneficio);
+      formData.append("observacao", observacaoBeneficio);
+      formData.append("documentoFrente", documentoFrente);
+      formData.append("documentoVerso", documentoVerso);
+
+      const data = await criarSolicitacaoBeneficio(formData);
       setSolicitacoesBeneficio([data.solicitacao, ...solicitacoesBeneficio]);
       setDadosBeneficio("");
       setObservacaoBeneficio("");
+      setDocumentoFrente(null);
+      setDocumentoVerso(null);
+      setDocumentoFrentePreview("");
+      setDocumentoVersoPreview("");
       setMsgBeneficio(data.mensagem || "Solicitacao enviada.");
     } catch (error) {
       setErroBeneficio(error.message);
@@ -312,6 +374,38 @@ export default function Saldo() {
                 value={observacaoBeneficio}
                 onChange={(e) => setObservacaoBeneficio(e.target.value)}
                 placeholder="Informacoes adicionais para o admin"
+              />
+            </label>
+            <label style={s.field}>
+              <span style={s.label}>Documento - frente</span>
+              <input
+                style={s.input}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => setDocumentoFrente(e.target.files?.[0] || null)}
+              />
+              <span style={s.fileHint}>JPG, PNG ou WEBP ate 2MB.</span>
+              <DocumentoPreview
+                titulo="Frente do documento"
+                arquivo={documentoFrente}
+                url={documentoFrentePreview}
+                onRemove={() => setDocumentoFrente(null)}
+              />
+            </label>
+            <label style={s.field}>
+              <span style={s.label}>Documento - verso</span>
+              <input
+                style={s.input}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={(e) => setDocumentoVerso(e.target.files?.[0] || null)}
+              />
+              <span style={s.fileHint}>JPG, PNG ou WEBP ate 2MB.</span>
+              <DocumentoPreview
+                titulo="Verso do documento"
+                arquivo={documentoVerso}
+                url={documentoVersoPreview}
+                onRemove={() => setDocumentoVerso(null)}
               />
             </label>
             <button style={s.btn(true)} onClick={handleSolicitarBeneficio} disabled={enviandoBeneficio}>

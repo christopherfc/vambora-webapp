@@ -221,10 +221,16 @@ export async function listarSolicitacoesBeneficio() {
 }
 
 export async function criarSolicitacaoBeneficio(dados) {
+  const isFormData = dados instanceof FormData;
+  const requestHeaders = isFormData ? {} : headers(true);
+  if (isFormData) {
+    const token = getToken();
+    if (token) requestHeaders.Authorization = `Bearer ${token}`;
+  }
   const res = await fetch(`${API_URL}/usuario/beneficios/solicitacoes`, {
     method: "POST",
-    headers: headers(true),
-    body: JSON.stringify(dados),
+    headers: requestHeaders,
+    body: isFormData ? dados : JSON.stringify(dados),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.mensagem || "Erro ao solicitar beneficio");

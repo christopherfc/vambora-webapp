@@ -1,6 +1,24 @@
 import bcrypt from "bcrypt";
+import cloudinary, { cloudinaryConfigurado } from "../config/cloudinary.js";
 import prisma from "../config/prisma.js";
 import { serializarSolicitacaoBeneficio, serializarUsuario, toCartaoTipo } from "../utils/serializers.js";
+
+function uploadCloudinary(buffer, publicId) {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      {
+        folder: "vambora/beneficios",
+        public_id: publicId,
+        resource_type: "image",
+      },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result);
+      }
+    );
+    stream.end(buffer);
+  });
+}
 
 export const obterPerfil = async (req, res) => {
   try {
@@ -132,6 +150,9 @@ export const criarSolicitacaoBeneficio = async (req, res) => {
     if (dados.length < 5) {
       return res.status(400).json({ mensagem: "Informe os dados para analise do beneficio" });
     }
+    if (!cloudinaryConfigurado()) {
+      return res.status(500).json({ mensagem: "Cloudinary nao configurado no backend" });
+    }
 
     const usuario = await prisma.user.findUnique({ where: { id: req.usuario } });
     if (!usuario) return res.status(404).json({ mensagem: "Usuario nao encontrado" });
@@ -146,12 +167,26 @@ export const criarSolicitacaoBeneficio = async (req, res) => {
       return res.status(409).json({ mensagem: "Voce ja possui uma solicitacao pendente" });
     }
 
+    const documentoFrente = req.files?.documentoFrente?.[0];
+    const documentoVerso = req.files?.documentoVerso?.[0];
+    if (!documentoFrente || !documentoVerso) {
+      return res.status(400).json({ mensagem: "Envie a foto da frente e do verso do documento" });
+    }
+
+    const sufixo = `${req.usuario}-${Date.now()}`;
+    const [frente, verso] = await Promise.all([
+      uploadCloudinary(documentoFrente.buffer, `frente-${sufixo}`),
+      uploadCloudinary(documentoVerso.buffer, `verso-${sufixo}`),
+    ]);
+
     const solicitacao = await prisma.solicitacaoBeneficio.create({
       data: {
         usuarioId: req.usuario,
         tipoSolicitado,
         dados,
         observacao,
+        documentoFrenteUrl: frente.secure_url,
+        documentoVersoUrl: verso.secure_url,
       },
     });
 
