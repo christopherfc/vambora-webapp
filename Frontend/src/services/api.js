@@ -49,6 +49,28 @@ export async function registrar(nome, email, senha, telefone) {
   return data;
 }
 
+export async function solicitarRecuperacaoSenha(email) {
+  const res = await fetch(`${API_URL}/auth/recuperar-senha`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ email }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao solicitar recuperacao de senha");
+  return data;
+}
+
+export async function redefinirSenha(token, novaSenha) {
+  const res = await fetch(`${API_URL}/auth/redefinir-senha`, {
+    method: "POST",
+    headers: headers(),
+    body: JSON.stringify({ token, novaSenha }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao redefinir senha");
+  return data;
+}
+
 export function logout() {
   localStorage.removeItem("vambora_token");
   localStorage.removeItem("vambora_usuario");

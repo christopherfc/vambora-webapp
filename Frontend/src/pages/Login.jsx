@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { login, registrar } from "../services/api.js";
+import { login, redefinirSenha, registrar, solicitarRecuperacaoSenha } from "../services/api.js";
 
 const s = {
   page: {
@@ -204,20 +204,34 @@ const s = {
     fontWeight: 700,
     textAlign: "center",
   },
+  sucesso: {
+    background: "var(--cor-sucesso-fundo, #E8FFF0)",
+    color: "var(--cor-sucesso, #1E8449)",
+    padding: "10px 14px",
+    borderRadius: 10,
+    fontSize: 13,
+    fontWeight: 700,
+    textAlign: "center",
+  },
 };
 
 export default function Login({ onEntrar }) {
-  const [tela, setTela] = useState("login"); // "login" | "cadastro"
+  const resetTokenInicial = new URLSearchParams(window.location.search).get("resetToken") || "";
+  const [tela, setTela] = useState(resetTokenInicial ? "redefinir" : "login"); // "login" | "cadastro" | "recuperar" | "redefinir"
   const [nome, setNome] = useState("");
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
+  const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [resetToken] = useState(resetTokenInicial);
   const [telefone, setTelefone] = useState("");
   const [erro, setErro] = useState("");
+  const [sucesso, setSucesso] = useState("");
   const [enviando, setEnviando] = useState(false);
 
   async function handleLogin(e) {
     e.preventDefault();
     setErro("");
+    setSucesso("");
     setEnviando(true);
     try {
       await login(email, senha);
@@ -232,10 +246,49 @@ export default function Login({ onEntrar }) {
   async function handleCadastro(e) {
     e.preventDefault();
     setErro("");
+    setSucesso("");
     setEnviando(true);
     try {
       await registrar(nome, email, senha, telefone);
       onEntrar();
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function handleRecuperarSenha(e) {
+    e.preventDefault();
+    setErro("");
+    setSucesso("");
+    setEnviando(true);
+    try {
+      const data = await solicitarRecuperacaoSenha(email);
+      setSucesso(data.mensagem);
+    } catch (err) {
+      setErro(err.message);
+    } finally {
+      setEnviando(false);
+    }
+  }
+
+  async function handleRedefinirSenha(e) {
+    e.preventDefault();
+    setErro("");
+    setSucesso("");
+    if (senha !== confirmarSenha) {
+      setErro("As senhas nao conferem.");
+      return;
+    }
+    setEnviando(true);
+    try {
+      const data = await redefinirSenha(resetToken, senha);
+      setSucesso(data.mensagem);
+      setSenha("");
+      setConfirmarSenha("");
+      window.history.replaceState({}, "", window.location.pathname);
+      setTimeout(() => setTela("login"), 1200);
     } catch (err) {
       setErro(err.message);
     } finally {
@@ -306,7 +359,7 @@ export default function Login({ onEntrar }) {
             onChange={e => setSenha(e.target.value)}
             required
           />
-          <button type="button" style={s.linkEsqueci}>
+          <button type="button" style={s.linkEsqueci} onClick={() => { setTela("recuperar"); setErro(""); setSucesso(""); }}>
             Esqueci minha senha!
           </button>
           {erro && tela === "login" && <div style={s.erro}>{erro}</div>}
@@ -324,7 +377,7 @@ export default function Login({ onEntrar }) {
             </button>
           </div>
         </form>
-      ) : (
+      ) : tela === "cadastro" ? (
         <form style={s.form} onSubmit={handleCadastro}>
           <div style={s.logo}>
             <span style={{ color: "var(--cor-primaria)" }}>vam</span>
@@ -377,6 +430,75 @@ export default function Login({ onEntrar }) {
             onClick={() => setTela("login")}
           >
             Cancelar
+          </button>
+        </form>
+      ) : tela === "recuperar" ? (
+        <form style={s.form} onSubmit={handleRecuperarSenha}>
+          <div style={s.logo}>
+            <span style={{ color: "var(--cor-primaria)" }}>vam</span>
+            <span style={{ color: "var(--cor-texto)" }}>bora</span>
+            <span style={{ color: "var(--cor-primaria)" }}>.</span>
+            <span style={{ color: "var(--cor-texto)", fontSize: 22, fontWeight: 700 }}> penedo</span>
+          </div>
+          <div style={s.titulo}>Recuperar<br />Senha</div>
+          <div style={s.logoSub}>Informe seu email para receber o link de redefinicao.</div>
+          <input
+            style={s.input}
+            type="email"
+            placeholder="Email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            required
+          />
+          {erro && tela === "recuperar" && <div style={s.erro}>{erro}</div>}
+          {sucesso && tela === "recuperar" && <div style={s.sucesso}>{sucesso}</div>}
+          <button type="submit" style={enviando ? s.btnDesabilitado : s.btnPrimario} disabled={enviando}>
+            {enviando ? "Enviando..." : "Enviar link"}
+          </button>
+          <button
+            type="button"
+            style={s.linkSecundario}
+            onClick={() => { setTela("login"); setErro(""); setSucesso(""); }}
+          >
+            Voltar ao login
+          </button>
+        </form>
+      ) : (
+        <form style={s.form} onSubmit={handleRedefinirSenha}>
+          <div style={s.logo}>
+            <span style={{ color: "var(--cor-primaria)" }}>vam</span>
+            <span style={{ color: "var(--cor-texto)" }}>bora</span>
+            <span style={{ color: "var(--cor-primaria)" }}>.</span>
+            <span style={{ color: "var(--cor-texto)", fontSize: 22, fontWeight: 700 }}> penedo</span>
+          </div>
+          <div style={s.titulo}>Nova<br />Senha</div>
+          <input
+            style={s.input}
+            type="password"
+            placeholder="Nova senha"
+            value={senha}
+            onChange={e => setSenha(e.target.value)}
+            required
+          />
+          <input
+            style={s.input}
+            type="password"
+            placeholder="Confirmar nova senha"
+            value={confirmarSenha}
+            onChange={e => setConfirmarSenha(e.target.value)}
+            required
+          />
+          {erro && tela === "redefinir" && <div style={s.erro}>{erro}</div>}
+          {sucesso && tela === "redefinir" && <div style={s.sucesso}>{sucesso}</div>}
+          <button type="submit" style={enviando ? s.btnDesabilitado : s.btnPrimario} disabled={enviando}>
+            {enviando ? "Salvando..." : "Redefinir senha"}
+          </button>
+          <button
+            type="button"
+            style={s.linkSecundario}
+            onClick={() => { window.history.replaceState({}, "", window.location.pathname); setTela("login"); setErro(""); setSucesso(""); }}
+          >
+            Voltar ao login
           </button>
         </form>
       )}

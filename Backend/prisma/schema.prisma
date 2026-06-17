@@ -37,6 +37,7 @@ model User {
   cobrancasRecebidas     Cobranca[]     @relation("PassageiroCobrancas")
   recargas               Recarga[]
   solicitacoesBeneficio   SolicitacaoBeneficio[]
+  tokensRecuperacaoSenha  PasswordResetToken[]
   createdAt              DateTime       @default(now())
   updatedAt              DateTime       @updatedAt
 
@@ -248,6 +249,19 @@ model SolicitacaoBeneficio {
   @@index([usuarioId, createdAt])
   @@index([status, createdAt])
   @@map("solicitacoes_beneficio")
+}
+
+model PasswordResetToken {
+  id        Int       @id @default(autoincrement())
+  usuarioId Int
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  usuario   User      @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  createdAt DateTime  @default(now())
+
+  @@index([usuarioId, createdAt])
+  @@map("password_reset_tokens")
 }
 
 enum Role {
