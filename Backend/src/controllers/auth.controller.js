@@ -155,7 +155,11 @@ export const solicitarRecuperacaoSenha = async (req, res) => {
     await enviarEmailRecuperacao({ email: usuario.email, nome: usuario.nome, token });
     res.json({ mensagem });
   } catch (error) {
-    res.status(500).json({ mensagem: "Erro ao solicitar recuperacao de senha" });
+    console.error("Erro ao solicitar recuperacao de senha:", error);
+    res.status(500).json({
+      mensagem: "Erro ao solicitar recuperacao de senha",
+      detalhe: error.message,
+    });
   }
 };
 
