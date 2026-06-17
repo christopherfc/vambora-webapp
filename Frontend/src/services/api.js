@@ -148,6 +148,17 @@ export async function cobradorCobrar(dados) {
   return data;
 }
 
+export async function cobradorConsultarCobranca(dados) {
+  const res = await fetch(`${API_URL}/cobrador/consultar-cobranca`, {
+    method: "POST",
+    headers: headers(true),
+    body: JSON.stringify(dados),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.mensagem || "Erro ao consultar cobranca");
+  return data;
+}
+
 // ── Perfil ─────────────────────────────────────────────────────────────────────
 
 export async function buscarPerfil() {
