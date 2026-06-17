@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Eye, EyeOff } from "lucide-react";
 import { login, redefinirSenha, registrar, solicitarRecuperacaoSenha } from "../services/api.js";
 
 const s = {
@@ -87,6 +88,41 @@ const s = {
     outline: "none",
     color: "#333",
     boxSizing: "border-box",
+  },
+
+  passwordField: {
+    position: "relative",
+    width: "100%",
+  },
+
+  passwordInput: {
+    width: "100%",
+    padding: "14px 48px 14px 18px",
+    borderRadius: 12,
+    border: "none",
+    background: "#F2F2F2",
+    fontSize: 14,
+    fontFamily: "var(--font-family)",
+    outline: "none",
+    color: "#333",
+    boxSizing: "border-box",
+  },
+
+  passwordToggle: {
+    position: "absolute",
+    top: "50%",
+    right: 14,
+    transform: "translateY(-50%)",
+    width: 28,
+    height: 28,
+    display: "flex",
+    alignItems: "center",
+    justifyContent: "center",
+    background: "none",
+    border: "none",
+    padding: 0,
+    color: "var(--cor-texto-suave)",
+    cursor: "pointer",
   },
 
   phoneRow: {
@@ -222,6 +258,8 @@ export default function Login({ onEntrar }) {
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [confirmarSenha, setConfirmarSenha] = useState("");
+  const [verSenha, setVerSenha] = useState(false);
+  const [verConfirmarSenha, setVerConfirmarSenha] = useState(false);
   const [resetToken] = useState(resetTokenInicial);
   const [telefone, setTelefone] = useState("");
   const [erro, setErro] = useState("");
@@ -296,6 +334,28 @@ export default function Login({ onEntrar }) {
     }
   }
 
+  const campoSenha = ({ placeholder, value, onChange, ver, setVer }) => (
+    <div style={s.passwordField}>
+      <input
+        style={s.passwordInput}
+        type={ver ? "text" : "password"}
+        placeholder={placeholder}
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        required
+      />
+      <button
+        type="button"
+        style={s.passwordToggle}
+        onClick={() => setVer(!ver)}
+        aria-label={ver ? "Esconder senha" : "Mostrar senha"}
+        title={ver ? "Esconder senha" : "Mostrar senha"}
+      >
+        {ver ? <EyeOff size={18} /> : <Eye size={18} />}
+      </button>
+    </div>
+  );
+
   return (
     <div style={s.page}>
       <style>{`
@@ -351,14 +411,7 @@ export default function Login({ onEntrar }) {
             onChange={e => setEmail(e.target.value)}
             required
           />
-          <input
-            style={s.input}
-            type="password"
-            placeholder="Senha"
-            value={senha}
-            onChange={e => setSenha(e.target.value)}
-            required
-          />
+          {campoSenha({ placeholder: "Senha", value: senha, onChange: setSenha, ver: verSenha, setVer: setVerSenha })}
           <button type="button" style={s.linkEsqueci} onClick={() => { setTela("recuperar"); setErro(""); setSucesso(""); }}>
             Esqueci minha senha!
           </button>
@@ -402,14 +455,7 @@ export default function Login({ onEntrar }) {
             onChange={e => setEmail(e.target.value)}
             required
           />
-          <input
-            style={s.input}
-            type="password"
-            placeholder="Senha"
-            value={senha}
-            onChange={e => setSenha(e.target.value)}
-            required
-          />
+          {campoSenha({ placeholder: "Senha", value: senha, onChange: setSenha, ver: verSenha, setVer: setVerSenha })}
           <div style={s.phoneRow}>
             <span style={s.phoneFlag}>🇧🇷 ▾</span>
             <input
@@ -472,22 +518,8 @@ export default function Login({ onEntrar }) {
             <span style={{ color: "var(--cor-texto)", fontSize: 22, fontWeight: 700 }}> penedo</span>
           </div>
           <div style={s.titulo}>Nova<br />Senha</div>
-          <input
-            style={s.input}
-            type="password"
-            placeholder="Nova senha"
-            value={senha}
-            onChange={e => setSenha(e.target.value)}
-            required
-          />
-          <input
-            style={s.input}
-            type="password"
-            placeholder="Confirmar nova senha"
-            value={confirmarSenha}
-            onChange={e => setConfirmarSenha(e.target.value)}
-            required
-          />
+          {campoSenha({ placeholder: "Nova senha", value: senha, onChange: setSenha, ver: verSenha, setVer: setVerSenha })}
+          {campoSenha({ placeholder: "Confirmar nova senha", value: confirmarSenha, onChange: setConfirmarSenha, ver: verConfirmarSenha, setVer: setVerConfirmarSenha })}
           {erro && tela === "redefinir" && <div style={s.erro}>{erro}</div>}
           {sucesso && tela === "redefinir" && <div style={s.sucesso}>{sucesso}</div>}
           <button type="submit" style={enviando ? s.btnDesabilitado : s.btnPrimario} disabled={enviando}>
