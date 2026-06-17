@@ -151,6 +151,7 @@ export const cobrarPassagem = async (req, res) => {
     if (resumo.erro) return res.status(resumo.erro.status).json({ mensagem: resumo.erro.mensagem });
 
     const { linha, passageiro, codigo, valor, valorOriginal, descontoPercentual } = resumo;
+    const linhaId = linha.id;
 
     if (resumo.saldo < valor) {
       await prisma.cobranca.create({
