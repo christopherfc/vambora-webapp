@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { Plus, Save, Trash2, RefreshCw, Route, HelpCircle, Bell, Users, Percent } from "lucide-react";
+import { Plus, Save, Trash2, RefreshCw, Route, HelpCircle, Bell, Users, Percent, Search, X } from "lucide-react";
 import { CircleMarker, MapContainer, Polyline, TileLayer, Tooltip, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import {
@@ -61,6 +61,9 @@ const s = {
   actions: { display: "flex", gap: 8, flexWrap: "wrap" },
   btn: (kind = "primary") => ({ display: "inline-flex", alignItems: "center", justifyContent: "center", gap: 7, border: "none", borderRadius: 8, padding: "10px 12px", background: kind === "danger" ? "var(--cor-erro)" : kind === "ghost" ? "var(--cor-borda-suave)" : "var(--cor-primaria)", color: kind === "ghost" ? "var(--cor-vinho)" : "#fff", fontWeight: 900, cursor: "pointer", fontFamily: "var(--font-family)" }),
   list: { display: "grid", gap: 8 },
+  filterBox: { display: "grid", gap: 8, marginBottom: 12 },
+  filterGrid: { display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(130px, 1fr))", gap: 8 },
+  filterTop: { display: "grid", gridTemplateColumns: "1fr auto", gap: 8, alignItems: "end" },
   item: (active) => ({ background: active ? "var(--cor-primaria-light)" : "#fff", border: `1px solid ${active ? "var(--cor-primaria)" : "var(--cor-borda)"}`, borderRadius: 8, padding: 12, cursor: "pointer" }),
   itemTop: { display: "flex", justifyContent: "space-between", gap: 10, alignItems: "center" },
   itemTitle: { fontSize: 14, fontWeight: 900, color: "var(--cor-texto)" },
@@ -405,6 +408,10 @@ export default function AdminPanel() {
   const [faqForm, setFaqForm] = useState(emptyFaq);
   const [notiForm, setNotiForm] = useState(emptyNotificacao);
   const [usuarioEditando, setUsuarioEditando] = useState(null);
+  const [usuarioBusca, setUsuarioBusca] = useState("");
+  const [usuarioRoleFiltro, setUsuarioRoleFiltro] = useState("todos");
+  const [usuarioCartaoFiltro, setUsuarioCartaoFiltro] = useState("todos");
+  const [usuarioSaldoFiltro, setUsuarioSaldoFiltro] = useState("todos");
   const [mapaAberto, setMapaAberto] = useState(false);
   const [msg, setMsg] = useState("");
 
@@ -515,6 +522,41 @@ export default function AdminPanel() {
     { id: "usuarios", label: "Usuarios", Icone: Users },
     { id: "cobranca", label: "Cobranca", Icone: Percent },
   ], []);
+
+  const usuariosFiltrados = useMemo(() => {
+    const busca = usuarioBusca.trim().toLowerCase();
+
+    return usuarios.filter((usuario) => {
+      const saldo = Number(usuario.cartao?.saldo || 0);
+      const texto = [
+        usuario.id,
+        usuario.nome,
+        usuario.email,
+        usuario.telefone,
+        usuario.role,
+        usuario.cartao?.numero,
+        usuario.cartao?.tipo,
+      ].filter(Boolean).join(" ").toLowerCase();
+
+      const passaBusca = !busca || texto.includes(busca);
+      const passaRole = usuarioRoleFiltro === "todos" || usuario.role === usuarioRoleFiltro;
+      const passaCartao = usuarioCartaoFiltro === "todos" || usuario.cartao?.tipo === usuarioCartaoFiltro;
+      const passaSaldo =
+        usuarioSaldoFiltro === "todos" ||
+        (usuarioSaldoFiltro === "comSaldo" && saldo > 0) ||
+        (usuarioSaldoFiltro === "semSaldo" && saldo === 0) ||
+        (usuarioSaldoFiltro === "saldoNegativo" && saldo < 0);
+
+      return passaBusca && passaRole && passaCartao && passaSaldo;
+    });
+  }, [usuarios, usuarioBusca, usuarioRoleFiltro, usuarioCartaoFiltro, usuarioSaldoFiltro]);
+
+  function limparFiltrosUsuarios() {
+    setUsuarioBusca("");
+    setUsuarioRoleFiltro("todos");
+    setUsuarioCartaoFiltro("todos");
+    setUsuarioSaldoFiltro("todos");
+  }
 
   return (
     <div style={s.page}>
@@ -654,7 +696,63 @@ export default function AdminPanel() {
                 <button style={s.btn()}><Save size={16} />Salvar usuario</button>
               </>}
             </form>
-            <div style={s.panel}><div style={s.panelTitle}>Usuarios</div><div style={s.list}>{usuarios.map((u) => <div key={u.id} style={s.item(usuarioEditando?.id === u.id)} onClick={() => setUsuarioEditando({ ...u, saldo: u.cartao?.saldo || 0 })}><div style={s.itemTitle}>{u.nome}</div><div style={s.itemSub}>{u.email} | {u.role} | R${Number(u.cartao?.saldo || 0).toFixed(2)}</div></div>)}</div></div>
+            <div style={s.panel}>
+              <div style={s.panelTitle}>Usuarios</div>
+              <div style={s.filterBox}>
+                <div style={s.filterTop}>
+                  <label style={{ ...s.field, marginBottom: 0 }}>
+                    <span style={s.label}>Buscar usuario</span>
+                    <input
+                      style={s.input}
+                      value={usuarioBusca}
+                      onChange={(e) => setUsuarioBusca(e.target.value)}
+                      placeholder="Nome, email, telefone ou cartao"
+                    />
+                  </label>
+                  <button type="button" style={s.btn("ghost")} onClick={limparFiltrosUsuarios}><X size={16} />Limpar</button>
+                </div>
+                <div style={s.filterGrid}>
+                  <label style={{ ...s.field, marginBottom: 0 }}>
+                    <span style={s.label}>Cargo</span>
+                    <select style={s.input} value={usuarioRoleFiltro} onChange={(e) => setUsuarioRoleFiltro(e.target.value)}>
+                      <option value="todos">Todos</option>
+                      <option value="USER">Usuario</option>
+                      <option value="MOTORISTA">Motorista</option>
+                      <option value="COBRADOR">Cobrador</option>
+                      <option value="ADMIN">Admin</option>
+                    </select>
+                  </label>
+                  <label style={{ ...s.field, marginBottom: 0 }}>
+                    <span style={s.label}>Cartao</span>
+                    <select style={s.input} value={usuarioCartaoFiltro} onChange={(e) => setUsuarioCartaoFiltro(e.target.value)}>
+                      <option value="todos">Todos</option>
+                      <option value="Comum">Comum</option>
+                      <option value="Estudante">Estudante</option>
+                      <option value="Idoso">Idoso</option>
+                    </select>
+                  </label>
+                  <label style={{ ...s.field, marginBottom: 0 }}>
+                    <span style={s.label}>Saldo</span>
+                    <select style={s.input} value={usuarioSaldoFiltro} onChange={(e) => setUsuarioSaldoFiltro(e.target.value)}>
+                      <option value="todos">Todos</option>
+                      <option value="comSaldo">Com saldo</option>
+                      <option value="semSaldo">Sem saldo</option>
+                      <option value="saldoNegativo">Saldo negativo</option>
+                    </select>
+                  </label>
+                </div>
+                <div style={s.itemSub}><Search size={13} /> {usuariosFiltrados.length} de {usuarios.length} usuarios</div>
+              </div>
+              <div style={s.list}>
+                {usuariosFiltrados.map((u) => (
+                  <div key={u.id} style={s.item(usuarioEditando?.id === u.id)} onClick={() => setUsuarioEditando({ ...u, saldo: u.cartao?.saldo || 0 })}>
+                    <div style={s.itemTitle}>{u.nome}</div>
+                    <div style={s.itemSub}>{u.email} | {u.role} | {u.cartao?.tipo || "Comum"} | cartao {u.cartao?.numero || "-"} | R${Number(u.cartao?.saldo || 0).toFixed(2)}</div>
+                  </div>
+                ))}
+                {usuariosFiltrados.length === 0 && <div style={s.itemSub}>Nenhum usuario encontrado com esses filtros.</div>}
+              </div>
+            </div>
           </div>
         )}
 
