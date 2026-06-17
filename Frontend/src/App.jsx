@@ -11,7 +11,14 @@ import Perfil from "./pages/Perfil.jsx";
 import AdminPanel from "./pages/AdminPanel.jsx";
 import MotoristaPanel from "./pages/MotoristaPanel.jsx";
 import CobradorPanel from "./pages/CobradorPanel.jsx";
-import { estaLogado, logout, contarNotificacoesNaoLidas, usuarioAtual } from "./services/api.js";
+import {
+  estaLogado,
+  logout,
+  contarNotificacoesNaoLidas,
+  usuarioAtual,
+  buscarPerfil,
+  salvarUsuarioAtual,
+} from "./services/api.js";
 import { resumeMotoristaTracker, stopMotoristaTracker } from "./services/motoristaTracker.js";
 
 export default function App() {
@@ -21,6 +28,24 @@ export default function App() {
   const [linhaSelecionada, setLinhaSelecionada] = useState(null);
   const [notiCount,        setNotiCount]        = useState(0);
   const [usuario,          setUsuario]          = useState(usuarioAtual());
+
+  useEffect(() => {
+    if (!logado) return;
+
+    async function atualizarPerfilAoAbrir() {
+      try {
+        const data = await buscarPerfil();
+        if (data?.usuario) {
+          salvarUsuarioAtual(data.usuario);
+          setUsuario(data.usuario);
+        }
+      } catch {
+        /* mantem o usuario salvo se o perfil nao carregar */
+      }
+    }
+
+    atualizarPerfilAoAbrir();
+  }, [logado]);
 
   /* ── Conta notificações não-lidas ── */
   const atualizarNotiCount = useCallback(async () => {

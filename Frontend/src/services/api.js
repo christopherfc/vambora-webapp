@@ -8,6 +8,10 @@ function setUsuario(usuario) {
   localStorage.setItem("vambora_usuario", JSON.stringify(usuario));
 }
 
+export function salvarUsuarioAtual(usuario) {
+  setUsuario(usuario);
+}
+
 function headers(auth = false) {
   const h = { "Content-Type": "application/json" };
   if (auth) {
